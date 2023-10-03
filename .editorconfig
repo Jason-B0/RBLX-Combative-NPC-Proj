@@ -1,0 +1,9 @@
+[*.luau]
+max_line_length = 100
+indent_type = space
+indent_size = 4
+
+[{*.json,.luaurc}]
+max_line_length = 100
+indent_type = space
+indent_size = 2

@@ -1,0 +1,13 @@
+# Project place file
+/SAC AI.rbxlx
+
+# Roblox Studio lock files
+/*.rbxlx.lock
+/*.rbxl.lock
+
+Packages/
+wally.lock
+sourcemap.json
+
+*.rbxl
+*.rbxlx

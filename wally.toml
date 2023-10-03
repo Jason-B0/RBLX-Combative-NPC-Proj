@@ -1,0 +1,21 @@
+[package]
+name = "rosolutions/codebase"
+version = "0.1.0"
+registry = "https://github.com/upliftgames/wally-index"
+realm = "shared"
+private = true
+
+[dependencies]
+Axis = "sleitnick/axis@^0.1.0"
+Knit = "sleitnick/knit@^1.5.3"
+Promise = "evaera/promise@^4.0.0"
+LuauPolyfill = "jsdotlua/luau-polyfill@^1.2.3"
+ProfileService = "jakebball/profileservice@^1.5.0"
+Signal = "sleitnick/signal@^1.5.0"
+Reflex = "littensy/reflex@^4.1.0"
+Trove = "sleitnick/trove@^0.5.0"
+Red = "uncontained0/red@^1.2.2"
+Sift = "csqrl/sift@^0.0.6"
+Observers = "sleitnick/observers@^0.3.3"
+t = "osyrisrblx/t@^3.0.0"
+TestEZ = "roblox/testez@0.4.1"
