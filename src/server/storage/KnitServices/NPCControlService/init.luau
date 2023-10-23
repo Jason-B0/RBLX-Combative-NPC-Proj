@@ -23,7 +23,7 @@ local NPCControlService = Knit.CreateService({
 
     OnDestinationReachedSignal = Signal.new(),
 })
-local NPCService
+local NPCService, TokenService
 
 local Asset = ServerStorage.Asset
 local GetNewNPCClass = require(script.GetNewNPCClass)
@@ -33,6 +33,7 @@ local NPCAppearance = require(script.NPCAppearance)
 
 function NPCControlService:CreateNewNPC()
     local newNPC = Asset.NPC:Clone()
+    newNPC.Name = TokenService:GenerateToken("npc")
     newNPC.Parent = workspace.NPC
 
     --// set up AI appearance
@@ -71,6 +72,7 @@ function NPCControlService:CreateNewNPC()
     newNPC:SetAttribute("NextWaypoint", nil)
     newNPC:SetAttribute("Zone", 0)
     newNPC:SetAttribute("DetectionDistance", "DAY_OUTDOOR")
+    newNPC:SetAttribute("Tag", newNPC.Name)
     newNPC:SetAttribute("Active", true)
 
     CollectionService:AddTag(newNPC, "NPC")
@@ -96,6 +98,7 @@ end
 --=================================
 function NPCControlService:KnitStart()
     NPCService = Knit.GetService("NPCService")
+    TokenService = Knit.GetService("TokenService")
     NPCService.ThisNPCFinishedMoving:Connect(self.OnDestinationReached)
 end
 

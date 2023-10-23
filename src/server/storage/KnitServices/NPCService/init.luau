@@ -11,7 +11,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local Knit = require(ReplicatedStorage.Packages.Knit)
 local Promise = require(ReplicatedStorage.Packages.Promise)
 local Signal = require(ReplicatedStorage.Packages.Signal)
-local Types = require(ReplicatedStorage.Common.Types)
+local Types = require(ReplicatedStorage.Shared.Types)
 
 local NPCService = Knit.CreateService({
     Name = "NPCService",
@@ -38,19 +38,9 @@ local NPCService = Knit.CreateService({
     ThisNPCFinishedMoving = Signal.new(),
 })
 
-type Character =
-    Model
-    & { Humanoid: Humanoid, HumanoidRootPart: BasePart, Torso: BasePart, Head: BasePart }
-type NPC = Model & {
-    Humanoid: Humanoid & { HumanoidDescription: HumanoidDescription, Animator: Animator },
-    HumanoidRootPart: BasePart,
-    Torso: BasePart,
-    Head: BasePart,
-}
-
 local NPCControlService
 --=================================
-local function findNearestPlayer(npc: NPC)
+local function findNearestPlayer(npc: Types.NPC)
     --[[
 		Check if player is in field of view of NPC.
 
@@ -76,7 +66,7 @@ local function findNearestPlayer(npc: NPC)
 		Check if player is in line of sight with the NPC, no solid parts obstructing between the two.
 	]]
     local function isNotObstructedByPart(
-        character: Character,
+        character: Types.Character,
         originPos: Vector3,
         unit: Vector3,
         dist: number
@@ -99,7 +89,7 @@ local function findNearestPlayer(npc: NPC)
 
     local nearestPlayer, distanceInBetween = nil, nil
     local distance = NPCService.DETECTION_DISTANCE[npc:GetAttribute("DetectionDistance")]
-    local character: Character, humanoid: Humanoid, humanoidRootPart: BasePart
+    local character: Types.Character, humanoid: Humanoid, humanoidRootPart: BasePart
 
     for _, player in pairs(Players:GetPlayers()) do
         if not player.Character then
@@ -142,7 +132,7 @@ local function findNearestPlayer(npc: NPC)
     return nearestPlayer, distanceInBetween
 end
 
-local function turnHead(npc: NPC, lookAt: Player | CFrame)
+local function turnHead(npc: Types.NPC, lookAt: Player | CFrame)
     local motor: Motor6D = npc.Torso:FindFirstChild("Neck") :: Motor6D
 
     if typeof(lookAt) == "Player" then
@@ -153,7 +143,7 @@ local function turnHead(npc: NPC, lookAt: Player | CFrame)
     end
 end
 
-local function calculatePath(npc: NPC, destination: Part)
+local function calculatePath(npc: Types.NPC, destination: Part)
     assert(destination:IsA("BasePart"), "destination is not a basepart.")
     local path = PathfindingService:CreatePath(NPCService.PATHFINDING_PARAM)
     local humanoid = npc:FindFirstChildOfClass("Humanoid")
@@ -204,7 +194,7 @@ local function calculatePath(npc: NPC, destination: Part)
     end)
 end
 --=================================
-function NPCService:ActivateNPC(npc: NPC)
+function NPCService:ActivateNPC(npc: Types.NPC)
     local function detection()
         return Promise.new(function(resolve, reject, onCancel)
             local active = true
@@ -216,6 +206,15 @@ function NPCService:ActivateNPC(npc: NPC)
             end)
 
             while active do
+                --[[
+                    TODO: Refactor
+                    
+                    Instruction:
+                    
+                    Remove while loop (since it is not the server's responsibility to handle this), and move findNearestPlayer() to client, where client will instead find the nearest NPC that they can see.
+                    
+                    The server NPC will only worry about turning head, setting alert status, etc.
+                ]]
                 task.wait(0.1)
 
                 local player, distance = findNearestPlayer(npc)
@@ -251,13 +250,13 @@ end
 
 --=================================
 function NPCService:KnitStart()
-    for _, npc: NPC in pairs(CollectionService:GetTagged(self.TAG_NAME)) do
+    for _, npc: Types.NPC in pairs(CollectionService:GetTagged(self.TAG_NAME)) do
         if npc:FindFirstChildOfClass("Humanoid") then
             self:ActivateNPC(npc)
         end
     end
 
-    CollectionService:GetInstanceAddedSignal(self.TAG_NAME):Connect(function(npc: NPC)
+    CollectionService:GetInstanceAddedSignal(self.TAG_NAME):Connect(function(npc: Types.NPC)
         assert(npc:FindFirstChildOfClass("Humanoid"), "NPC does not have a humanoid!")
         self:ActivateNPC(npc)
     end)
