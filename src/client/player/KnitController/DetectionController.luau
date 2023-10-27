@@ -28,9 +28,15 @@ local DetectionController = Knit.CreateController({
 local LocalPlayer = Players.LocalPlayer
 local Character
 
---==========================================
+--=========================================='
+
+--[[ 
+    Detects if the an NPC in a given range is able to see the player.
+    Returns the nearest NPC and the distance between the player and the NPC
+]]
 local function npcCanSeePlayer(npc: Types.NPC)
     
+    -- ignore if the player is an admin
     if LocalPlayer.TeamColor == DetectionController.IGNORED_TEAM_COLOR then return end
     
     local function isInFieldOfView(unit: Vector3)
@@ -81,14 +87,7 @@ local function npcCanSeePlayer(npc: Types.NPC)
             local isInFOV = isInFieldOfView(diffUnit)
             local isNotObstructed =
                 isNotObstructedByPart(npc, Character.HumanoidRootPart.Position, diffUnit, distance)
-
-            if
-                isInFOV
-                and isNotObstructed
-                and (
-                    distanceInBetween == nil
-                    or (distanceInBetween ~= nil and diffMagnitude < distanceInBetween)
-                )
+            if ( isInFOV and isNotObstructed and (distanceInBetween == nil or (distanceInBetween ~= nil and diffMagnitude < distanceInBetween)) )
             then
                 nearestNPC = npc
                 distanceInBetween = diffMagnitude
@@ -103,10 +102,13 @@ end
 function DetectionController:Render()
     RunService:BindToRenderStep("Detection", Enum.RenderPriority.Camera, function()
         for _, npc: Model in pairs(self.npcs) do
+            
             local nearestNPC, distanceInBetween = npcCanSeePlayer(npc)
+            
             if self.distanceInBetween < distanceInBetween then
                 self.nearestNPC, self.distanceInBetween = nearestNPC, distanceInBetween
             end
+            
         end
     end)
 end
