@@ -6,6 +6,7 @@ local Knit = require(game:GetService("ReplicatedStorage").Packages.Knit)
 local Signal = require(game:GetService("ReplicatedStorage").Packages.Signal)
 local Types = require(game:GetService("ReplicatedStorage").Shared.Types)
 
+local NPCService
 local DetectionController = Knit.CreateController({
     Name = "DetectionController",
 
@@ -21,8 +22,7 @@ local DetectionController = Knit.CreateController({
 
     IGNORED_TEAM_COLOR = BrickColor.new("Crimson"),
     
-    nearestNPC = nil,
-    distanceInBetween = nil,
+    npcsInFOV = {},
 })
 
 local LocalPlayer = Players.LocalPlayer
@@ -35,9 +35,6 @@ local Character
     Returns the nearest NPC and the distance between the player and the NPC
 ]]
 local function npcCanSeePlayer(npc: Types.NPC)
-    
-    -- ignore if the player is an admin
-    if LocalPlayer.TeamColor == DetectionController.IGNORED_TEAM_COLOR then return end
     
     local function isInFieldOfView(unit: Vector3)
         local npcLook: Vector3 = npc.HumanoidRootPart.CFrame.LookVector
@@ -71,13 +68,18 @@ local function npcCanSeePlayer(npc: Types.NPC)
         return false
     end
 
+    -- ignore if the player is an admin
+    if LocalPlayer.TeamColor == DetectionController.IGNORED_TEAM_COLOR then
+        return
+    end
+    
     local nearestNPC, distanceInBetween = nil, nil
     local distance = DetectionController.DETECTION_DISTANCE[npc:GetAttribute("DetectionDistance")]
     local humanoid: Humanoid, humanoidRootPart: BasePart
 
     humanoid = npc.Humanoid
     humanoidRootPart = npc.HumanoidRootPart
-
+    
     if (humanoid.Health > 0) then
         local diff: Vector3 = humanoidRootPart.Position - Character.HumanoidRootPart.Position
         local diffMagnitude: number = diff.Magnitude
@@ -85,9 +87,13 @@ local function npcCanSeePlayer(npc: Types.NPC)
 
         if diffMagnitude <= distance then
             local isInFOV = isInFieldOfView(diffUnit)
-            local isNotObstructed =
-                isNotObstructedByPart(npc, Character.HumanoidRootPart.Position, diffUnit, distance)
-            if ( isInFOV and isNotObstructed and (distanceInBetween == nil or (distanceInBetween ~= nil and diffMagnitude < distanceInBetween)) )
+            local isNotObstructed = isNotObstructedByPart(npc, Character.HumanoidRootPart.Position, diffUnit, distance)
+            
+            if ( 
+                    isInFOV and 
+                    isNotObstructed and 
+                    (distanceInBetween == nil or (distanceInBetween ~= nil and diffMagnitude < distanceInBetween)) 
+                )
             then
                 nearestNPC = npc
                 distanceInBetween = diffMagnitude
@@ -99,14 +105,33 @@ local function npcCanSeePlayer(npc: Types.NPC)
     
 end
 --==========================================
+function DetectionController:AggrovateNPC(aggrovationMode: string)
+    --[[
+        aggrovationMode can either be:
+        - "calm" - NPC will be in its dormal state
+        - "curious" - NPC will be in a curious state
+        - "suspicious" - NPC will be in a suspicious state
+        - "alert" - NPC will be in an alert state and will retaliate players
+    ]]
+    
+    assert(aggrovationMode == "calm" or aggrovationMode == "curious" or aggrovationMode == "suspicious" or aggrovationMode == "alert", "Invalid aggrovation mode!")
+    
+    NPCService
+end
+
 function DetectionController:Render()
     RunService:BindToRenderStep("Detection", Enum.RenderPriority.Camera, function()
         for _, npc: Model in pairs(self.npcs) do
             
             local nearestNPC, distanceInBetween = npcCanSeePlayer(npc)
             
-            if self.distanceInBetween < distanceInBetween then
-                self.nearestNPC, self.distanceInBetween = nearestNPC, distanceInBetween
+            if nearestNPC ~= nil and (not self.npcsInFOV[nearestNPC]) then
+                self.npcsInFOV[nearestNPC] = {nearestNPC, distanceInBetween}
+            else
+                -- if NPC is no longer in range, remove it from the table
+                if self.npcsInFOV[npc] ~= nil then
+                    self.npcsInFOV[npc] = nil
+                end
             end
             
         end
@@ -123,6 +148,9 @@ function DetectionController:KnitInit()
 end
 
 function DetectionController:KnitStart()
+    -- Initialize service
+    NPCService = Knit.GetService("NPCService")
+    
     for _, npc: Model in pairs(CollectionService:GetTagged(self.NPC_TAG_NAME)) do
         if npc:FindFirstChildOfClass("Humanoid") then
             self.npcs[npc.Name] = npc

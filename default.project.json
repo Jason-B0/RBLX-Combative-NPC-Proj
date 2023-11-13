@@ -8,6 +8,10 @@
       "Shared": {
         "$className": "Folder",
         "$path": "src/shared"
+      },
+      "Packages": {
+        "$className": "Folder",
+        "$path": "Packages"
       }
     },
 
