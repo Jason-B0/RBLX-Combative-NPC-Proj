@@ -1,60 +1,97 @@
 --[[
-
+	This service strictly tracks the status of all NPCs, creating them and assigning them tags, and
+	assigning paths etc.
+	Futhermore, this service also controlls whether NPCs are enabled or not.
+	
+	For internal functionalities of NPC, such as walking, attacking, tracking, etc.,
+	it is handled by each NPC object.
 ]]
 
 local CollectionService = game:GetService("CollectionService")
-local PathfindingService = game:GetService("PathfindingService")
+local PhysicsService = game:GetService("PhysicsService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local Workspace = game:GetService("Workspace")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 local Promise = require(ReplicatedStorage.Packages.Promise)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local Types = require(ReplicatedStorage.Shared.Types)
 
+local NPCObject = require(script.NPC)
+--=================================
 local NPCService = Knit.CreateService({
     Name = "NPCService",
-
+    Client = {},
+    
     TAG_NAME = "NPC",
-    npcs = {}
+    NPC_FOLDER = workspace.NPC,
+    
+    NPCs = {} :: {[string]: Types.NPCModel},
+    
 })
-
-local NPCControlService
+local TokenService
 --=================================
-function NPCService:Aggrovate(npc: Types.NPC, aggrovationMode: string)
-    assert(
-        aggrovationMode == "calm"
-            or aggrovationMode == "curious"
-            or aggrovationMode == "suspicious"
-            or aggrovationMode == "alert",
-        "Invalid aggrovation mode!"
-    )
-    
-    
+local Asset = ServerStorage.Asset
+
+--=================================
+
+-- NPC aggrovation
+function NPCService.Client:AggrovateNPC(player: Player, npcTag: string, newState: string)
+    return self.Server:AggrovateNPC(player, npcTag, newState)
 end
 
-function NPCService:ActivateNPC(npc: Types.NPC)
-    local npcType = npc.NPCType.Value
-    local npcModel = npc.NPCModel.Value
-
-    local npcControl = NPCControlService:CreateNPC(npcModel, npcType)
-    npcControl:Activate()
+function NPCService:AggrovateNPC(player: Player, npcTag: string, newState: string)
+    local npc = self.NPCs[npcTag]
+    if npc then
+        npc:SetAttribute("playerToTrack", player.Name or nil)
+        npc:SetAttribute("State", newState)
+    end
 end
+
+-- NPC creation
+function NPCService:CreateNewNPC(class: string?)
+    local newNPCModel = Asset.NPC:Clone()
+    newNPCModel.Parent = self.NPC_FOLDER
+    local newNPCObj = NPCObject.new(newNPCModel, class)
+    newNPCObj:Active()
+    return newNPCObj
+end
+
 --=================================
 function NPCService:KnitStart()
-    for _, npc: Types.NPC in pairs(CollectionService:GetTagged(self.TAG_NAME)) do
+    NPCService = Knit.GetService("NPCService")
+    TokenService = Knit.GetService("TokenService")
+    
+    -- add tagged NPC to the table
+    for _, npc: Types.NPCModel in pairs(CollectionService:GetTagged(self.TAG_NAME)) do
         if npc:FindFirstChildOfClass("Humanoid") then
-            self:ActivateNPC(npc)
+            self.NPCs[npc:GetAttribute("Tag")] = npc
         end
     end
 
-    CollectionService:GetInstanceAddedSignal(self.TAG_NAME):Connect(function(npc: Types.NPC)
+	-- set up all waypoint to be tagged with a token
+	for _, waypoint: Types.Waypoint in pairs(workspace.NPC_Waypoints:GetDescendants()) do
+		
+		if waypoint:IsA("BasePart") then
+			waypoint:SetAttribute("WaypointToken", TokenService:GenerateToken("wp"))
+		end
+	end 
+	
+    CollectionService:GetInstanceAddedSignal(self.TAG_NAME):Connect(function(npc: Types.NPCModel)
         assert(npc:FindFirstChildOfClass("Humanoid"), "NPC does not have a humanoid!")
-        self:ActivateNPC(npc)
+        self.NPCs[npc:GetAttribute("Tag")] = npc   
     end)
+    
 end
 
-function NPCService:KnitInit() end
+function NPCService:KnitInit()
+    PhysicsService:RegisterCollisionGroup("NPC")
+    PhysicsService:CollisionGroupSetCollidable("NPC", "NPC", false)
+	
+	
+	
+end
 
 return NPCService

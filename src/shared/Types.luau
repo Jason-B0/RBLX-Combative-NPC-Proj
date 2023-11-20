@@ -1,18 +1,40 @@
 local types = {}
 
-export type NPC = Model & {
+export type NPCModel = Model & {
     HumanoidRootPart: BasePart,
     Humanoid: Humanoid & {
         HumanoidDescription: HumanoidDescription, Animator: Animator 
     },
-    HumanoidRootPart: BasePart,
-    Torso: BasePart,
+    Torso: BasePart & {
+        Neck: Motor6D,
+        ["Left Shoulder"]: Motor6D,
+        ["Right Shoulder"]: Motor6D,
+        ["Left Hip"]: Motor6D,
+        ["Right Hip"]: Motor6D,
+    },
     Head: BasePart,
+    StateBillboard: BillboardGui & {
+        StateIndicator: ImageLabel,
+    },
+    
+    -- Attributes
+    Class: string,
+    NextWaypointToken: string,
+        
+    -- Variables
+    playerToTrack: string,
+    State: "Safe" | "Curious" | "Suspicious" | "Alert" | "Hostile",
+    
+}
 
-    NPC_CLASS: string,
-    State: string,
-    NextWaypoint: Instance,
-    Zone: number,
+export type Waypoint = BasePart & {
+    CanPublicAccess: boolean;
+    CanPoliceAccess: boolean;
+    CanConstructionWorkerAccess: boolean;
+    CanDockWorkerAccess: boolean;
+    CanDockAdminAccess: boolean;
+    CanCartelAccess: boolean;
+    WaypointToken: string;
 }
 
 export type Character = Model & {

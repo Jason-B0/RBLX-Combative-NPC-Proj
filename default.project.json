@@ -4,6 +4,7 @@
     "$className": "DataModel",
 
     "ReplicatedStorage": {
+      "$ignoreUnknownInstances": true,
       "$className": "ReplicatedStorage",
       "Shared": {
         "$className": "Folder",
@@ -16,48 +17,56 @@
     },
 
     "ServerScriptService": {
+      "$ignoreUnknownInstances": true,
       "$className": "ServerScriptService",
       "$path": "src/server/scripts"
     },
     
     "ServerStorage": {
-      "$className": "ServerStorage",
       "$ignoreUnknownInstances": true,
+      "$className": "ServerStorage",
       "$path": "src/server/storage"
     },
-
+    
     "StarterPlayer": {
+      "$className": "StarterPlayer",
+      
       "StarterPlayerScripts": {
+        "$ignoreUnknownInstances": true,
         "$className": "StarterPlayerScripts",
-        "$path": "src/client/scripts"
+        "$path": "src/client/StarterPlayerScripts"
       },
       "StarterCharacterScripts": {
+        "$ignoreUnknownInstances": true,
         "$className": "StarterCharacterScripts",
-        "$path": "src/client/character"
+        "$path": "src/client/StarterCharacterScripts"
       }
+      
     },
-
+    
+    
+    
     "Workspace": {
       "$className": "Workspace",
       "$ignoreUnknownInstances": true,
       "$path": "src/client/workspace",
       "$properties": {
         "FilteringEnabled": true
+      },
+      
+      "NPC_Waypoints": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": true,
+        
+        "EvadeWaypoints": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": true
+        }
       }
-    },
-    "Lighting": {
-      "$properties": {
-        "Ambient": [
-          0,
-          0,
-          0
-        ],
-        "Brightness": 2,
-        "GlobalShadows": true,
-        "Outlines": false,
-        "Technology": "ShadowMap"
-      }
-    },
+        
+      
+    }, 
+    
     "SoundService": {
       "$properties": {
         "RespectFilteringEnabled": true

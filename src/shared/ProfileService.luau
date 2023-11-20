@@ -2011,7 +2011,7 @@ function ProfileStore:LoadProfileAsync(profile_key, not_released_handler, _use_m
                     -- Adding profile to AutoSaveList;
                     AddProfileToAutoSave(profile)
                     -- Special case - finished loading profile, but session is shutting down:
-                    if ProfileService.ServiceLocked == true then
+                    if ProfileService.ServiceLocked then
                         SaveProfileAsync(profile, true) -- Release profile and yield until the DataStore call is finished
                         profile = nil -- nil will be returned by this call
                     end
