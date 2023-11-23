@@ -7,8 +7,8 @@ local Signal = require(game:GetService("ReplicatedStorage").Packages.Signal)
 local Types = require(game:GetService("ReplicatedStorage").Shared.Types)
 
 local NPCService
-local DetectionController = Knit.CreateController({
-    Name = "DetectionController",
+local ClientNPCController = Knit.CreateController({
+    Name = "ClientNPCController",
 
     NPC_TAG_NAME = "NPC",
     NPCs = {},
@@ -31,15 +31,15 @@ local PLAYER_ATTRIBUTES = {
     
 }
 --============ HELPER =====================
-
-local determineNPCAggroState = require(script.DetermineNPCAggroState)
-local npcIsInDetectionRange = require(script.NPCIsInDetectionRange)
-local locationState = require(script.LocationState)
-local operationState = require(script.OperationState)
+local Helper = script.Helper
+local determineNPCAggroState = require(Helper.DetermineNPCAggroState)
+local npcIsInDetectionRange = require(Helper.NPCIsInDetectionRange)
+local locationState = require(Helper.LocationState)
+local operationState = require(Helper.OperationState)
 
 --==========================================
 
-function DetectionController:Render()
+function ClientNPCController:Render()
     local torso = Character:WaitForChild("Torso") :: BasePart
     local overlapParams = OverlapParams.new()
     overlapParams.FilterType = Enum.RaycastFilterType.Whitelist
@@ -49,7 +49,7 @@ function DetectionController:Render()
     RunService:BindToRenderStep("Detection", Enum.RenderPriority.Camera.Value, function()
         
         -- Ignore if player is on the ignored team color
-        if LocalPlayer.TeamColor == DetectionController.IGNORED_TEAM_COLOR then
+        if LocalPlayer.TeamColor == ClientNPCController.IGNORED_TEAM_COLOR then
             
             if not operationState:get() == "Safe" or not locationState:get() == "Safe" then
                 locationState:set("Safe")
@@ -174,22 +174,30 @@ function DetectionController:Render()
 end
 
 --==========================================
-function DetectionController:KnitInit()
+function ClientNPCController:KnitInit()
     if not LocalPlayer.Character then
         Character = LocalPlayer.CharacterAdded:Wait()
     else
         Character = LocalPlayer.Character
     end
-    
-    self.REGIONS = {}
-    
-    for _, region: BasePart in pairs(workspace:FindFirstChild("Regions"):GetChildren()) do
-        self.REGIONS[region.Name] = Region3.new(region.Position - region.Size/2, region.Position + region.Size/2)
+        
+    -- set up regions
+    for _, regionPart: BasePart in pairs(workspace:FindFirstChild("Regions"):GetChildren()) do
+        local regionName = regionPart:GetAttribute("RegionName") :: string
+        local regionSize = regionPart.Size
+        local regionPos = regionPart.Position
+        local regionRestriction = regionPart:GetAttribute("RegionRestriction") :: string  
+         
+        self.REGIONS[#self.REGIONS+1] = {
+            name = regionName,
+            restriction = regionRestriction,
+            region = Region3.new(regionPos - regionSize/2, regionPos + regionSize/2),
+        }
     end
     
 end
 
-function DetectionController:KnitStart()
+function ClientNPCController:KnitStart()
     -- wait for character to load
     if not LocalPlayer.Character then LocalPlayer.CharacterAdded:Wait() end
     Character = LocalPlayer.Character
@@ -213,15 +221,15 @@ function DetectionController:KnitStart()
         for i, v in pairs(PLAYER_ATTRIBUTES) do
             LocalPlayer:SetAttribute(tostring(i), v)
         end
-        DetectionController:Render()
+        ClientNPCController:Render()
     end)
     
     -- on first start
     for i, v in pairs(PLAYER_ATTRIBUTES) do
         LocalPlayer:SetAttribute(tostring(i), v)
     end
-    DetectionController:Render()
+    ClientNPCController:Render()
     
 end
 
-return DetectionController
+return ClientNPCController

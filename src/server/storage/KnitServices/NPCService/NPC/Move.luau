@@ -19,8 +19,6 @@ local PATHFINDING_PARAM = {
     }
 }
 --============================
-
-
 return function(self, destination: Types.Waypoint | BasePart)
         local path = PathfindingService:CreatePath(PATHFINDING_PARAM)
         local humanoid = self.NPCModel:FindFirstChildOfClass("Humanoid")
