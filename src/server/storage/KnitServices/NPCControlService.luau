@@ -6,34 +6,53 @@
 	For internal functionalities of NPC, such as walking, attacking, tracking, etc.,
 	it is handled by each NPC object.
 ]]
-
-local CollectionService = game:GetService("CollectionService")
-local PhysicsService = game:GetService("PhysicsService")
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
-local Workspace = game:GetService("Workspace")
-
+local RunService = game:GetService("RunService")
 local Knit = require(ReplicatedStorage.Packages.Knit)
-local Promise = require(ReplicatedStorage.Packages.Promise)
-local Signal = require(ReplicatedStorage.Packages.Signal)
-local Types = require(ReplicatedStorage.Shared.Types)
 
 --=================================
 local NPCControlService = Knit.CreateService({
     Name = "NPCControlService",
     Client = {},
     
-    NPC_FOLDER = workspace.NPC,
-        
+	Config = {
+		CIVILIAN = 50,
+		POLICE = 50,
+		OPFOR = 50,
+		DOCK_WORKER = 50,
+		DOCK_ADMIN = 50,
+	}
 })
+local NPCService
 --=================================
+local function spawnNPC(npcType: string)
+	assert(NPCControlService.Config[npcType], "Invalid NPC type: "..npcType)
+    task.spawn(function()
+        for _ = 1, NPCControlService.Config.CIVILIAN_COUNT do
+            NPCService:CreateNewNPC()
+            task.wait(0.1)
+        end
+    end)
+end
 
---=================================
+function NPCControlService:Start()
+    spawnNPC("CIVILIAN")
+	spawnNPC("POLICE")
+	spawnNPC("OPFOR")
+	spawnNPC("DOCK_WORKER")
+	spawnNPC("DOCK_ADMIN")
+end
 
 --=================================
 function NPCControlService:KnitStart()
-    
+    NPCService = Knit.GetService("NPCService")
+	
+	if RunService:IsStudio() then
+		return
+	end
+	
+	self:Start()
+	
 end
 
 function NPCControlService:KnitInit()
