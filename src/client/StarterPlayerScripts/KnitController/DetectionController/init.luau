@@ -13,18 +13,7 @@ local DetectionController = Knit.CreateController({
     NPC_TAG_NAME = "NPC",
     NPCs = {},
     
-    DETECTION_DISTANCE = {
-        DAY_OUTDOOR = 100,
-        NIGHT_OUTDOOR = 50,
-        BRIGHT_INDOOR = 70,
-        DARK_INDOOR = 10,
-    },
-    
     REGIONS = {},
-    
-    NPC_FOV = 60,
-
-    IGNORED_TEAM_COLOR = BrickColor.new("Crimson"),
     
     npcsInFOV = {},
 })
@@ -43,184 +32,12 @@ local PLAYER_ATTRIBUTES = {
 }
 --============ HELPER =====================
 
---[[ 
-    Detects if the an NPC in a given range is able to see the player.
-    Returns the nearest NPC and the distance between the player and the NPC
-]]
-local function npcCanSeePlayer(npc: Types.NPCModel, disregardFOV: boolean?): boolean
-    
-    local function isInFieldOfView(unit: Vector3)
-        local npcLook: Vector3 = npc.HumanoidRootPart.CFrame.LookVector
-        local dotProd: number = unit:Dot(npcLook)
-        local angle: number = math.deg(math.acos(dotProd))
-        
-        if angle <= DetectionController.NPC_FOV then
-            return true
-        end
-        return false
-    end
-    
-    local function checkLineOfSight(
-        charModel: Model | Types.NPCModel,
-        start: Vector3,
-        targ: Vector3
-    ): (boolean, number | nil)
-        local raycastParams = RaycastParams.new()
-        raycastParams.FilterType = Enum.RaycastFilterType.Exclude
-        raycastParams.FilterDescendantsInstances =
-            { charModel, Character }
-        local result = workspace:Raycast(start, targ - start, raycastParams)
-        
-        if result ~= nil then
-            if result.Instance.Parent == charModel then
-                return true
-            end
-            return false
-        end
-        return true
-    end
-
-    -- ignore if the player is an admin
-    if LocalPlayer.TeamColor == DetectionController.IGNORED_TEAM_COLOR then
-        return
-    end
-    
-    local npcInRange, distanceInBetween = false, nil
-    local distance = DetectionController.DETECTION_DISTANCE[npc:GetAttribute("DetectionDistance")]
-    local humanoid: Humanoid, humanoidRootPart: BasePart
-
-    humanoid = npc.Humanoid
-    humanoidRootPart = npc.HumanoidRootPart
-    
-    if (humanoid.Health > 0) then
-        local diff: Vector3 =  Character.HumanoidRootPart.Position - humanoidRootPart.Position
-        local diffMagnitude: number = diff.Magnitude
-        local diffUnit: Vector3 = diff.Unit
-        
-        if disregardFOV == true and diffMagnitude <= 150 then
-            npcInRange = true
-        elseif diffMagnitude <= distance then
-            local isInFOV = isInFieldOfView(diffUnit)
-            local hasLineOfSight = checkLineOfSight(npc, npc.Head.Position, Character.HumanoidRootPart.Position)
-            if ( 
-                    isInFOV and 
-                    hasLineOfSight and 
-                    (distanceInBetween == nil or (distanceInBetween ~= nil and diffMagnitude < distanceInBetween)) 
-                )
-            then
-                npcInRange = true
-                distanceInBetween = diffMagnitude
-            end
-        end
-    end
-
-    return npcInRange
-    
-end
-
+local determineNPCAggroState = require(script.DetermineNPCAggroState)
+local npcIsInDetectionRange = require(script.NPCIsInDetectionRange)
+local locationState = require(script.LocationState)
+local operationState = require(script.OperationState)
 
 --==========================================
-local function updateOperationState(newState: string?)
-    if newState ~= nil then
-        LocalPlayer:SetAttribute("operationState", newState)
-    else
-        LocalPlayer:SetAttribute("operationState", "Safe")
-    end
-end
-
-local function updateLocationState(newState: string?)
-    if newState ~= nil then
-        LocalPlayer:SetAttribute("locationState", newState)
-    else
-        LocalPlayer:SetAttribute("locationState", "Safe")
-    end
-end
-
-local function determineNPCAggroState(): string
-    local locationState = LocalPlayer:GetAttribute("locationState")
-    local operationState = LocalPlayer:GetAttribute("operationState")
-    local npcAggroState = ""
-    
-    if locationState == "Safe" then
-        
-        if operationState == "Safe" then
-            npcAggroState = "Safe"
-            
-        elseif operationState == "Abnormal Action" then
-            npcAggroState = "Curious"
-            
-        elseif operationState == "Illegal Action" then
-            npcAggroState = "Suspicious"
-            
-        elseif operationState == "Armed" then
-            npcAggroState = "Alert"
-
-        elseif operationState == "Compromised" then
-            npcAggroState = "Hostile"
-            
-        end
-        
-    elseif locationState == "Trespassing" then
-        
-        if operationState == "Safe" then
-            npcAggroState = "Curious"
-            
-        elseif operationState == "Abnormal Action" then
-            npcAggroState = "Suspicious"
-            
-        elseif operationState == "Illegal Action" then
-            npcAggroState = "Alert"
-            
-        elseif operationState == "Armed" then
-            npcAggroState = "Hostile"
-
-        elseif operationState == "Compromised" then
-            npcAggroState = "Hostile"
-            
-        end
-    
-    elseif locationState == "Restricted" then
-        
-        if operationState == "Safe" then
-            npcAggroState = "Suspicious"
-            
-        elseif operationState == "Abnormal Action" then
-            npcAggroState = "Alert"
-            
-        elseif operationState == "Illegal Action" then
-            npcAggroState = "Alert"
-            
-        elseif operationState == "Armed" then
-            npcAggroState = "Hostile"
-            
-        elseif operationState == "Compromised" then
-            npcAggroState = "Hostile"
-            
-        end
-   
-    elseif locationState == "Hostile Area" then
-        
-        if operationState == "Safe" then
-            npcAggroState = "Hostile"
-            
-        elseif operationState == "Abnormal Action" then
-            npcAggroState = "Hostile"
-            
-        elseif operationState == "Illegal Action" then
-            npcAggroState = "Hostile"
-            
-        elseif operationState == "Armed" then
-            npcAggroState = "Hostile"
-            
-        elseif operationState == "Compromised" then
-            npcAggroState = "Hostile"
-            
-        end
-        
-    end
-    
-    return npcAggroState
-end
 
 function DetectionController:Render()
     local torso = Character:WaitForChild("Torso") :: BasePart
@@ -231,18 +48,29 @@ function DetectionController:Render()
     
     RunService:BindToRenderStep("Detection", Enum.RenderPriority.Camera.Value, function()
         
+        -- Ignore if player is on the ignored team color
+        if LocalPlayer.TeamColor == DetectionController.IGNORED_TEAM_COLOR then
+            
+            if not operationState:get() == "Safe" or not locationState:get() == "Safe" then
+                locationState:set("Safe")
+                operationState:set("Safe")
+            end
+            
+            return
+        end
+        
         --===== UPDATE LOCATION =====
         for regionName, regionBounds: Region3 in (self.REGIONS) do
             local partsInRegion = workspace:GetPartBoundsInBox(regionBounds.CFrame, regionBounds.Size, overlapParams)
             if #partsInRegion > 0 then
                 if LocalPlayer:GetAttribute("disguisedForRegion") ~= regionName then
-                    updateLocationState("Trespassing")
+                    locationState:set("Trespassing")
                     break
                 else
-                    updateLocationState("Safe")
+                    locationState:set("Safe")
                 end
             else
-                updateLocationState("Safe")
+                locationState:set("Safe")
             end
         end
         
@@ -253,7 +81,7 @@ function DetectionController:Render()
             for _, npcModel in pairs(self.NPCs) do
             
                 local npcTag = npcModel:GetAttribute("Tag")
-                local npcInFOV = npcCanSeePlayer(npcModel)
+                local npcInFOV = npcIsInDetectionRange(npcModel)
                 
                 -- if NPC is in FOV and not already in the table, add it to the table
                 if npcInFOV == true then
@@ -293,15 +121,14 @@ function DetectionController:Render()
     -- equipping and unequipping tool
     Character.ChildAdded:Connect(function(child)
         if child:IsA("Tool") then
-            print(child:GetAttribute("ToolType"))
             local toolType = child:GetAttribute("ToolType") :: string
             
             if toolType == "Gun" then
-                updateOperationState("Armed")
+                operationState:set("Armed")
             elseif toolType == "Misc" then
-                updateOperationState("Abnormal Action")
+                operationState:set("Abnormal Action")
             else
-                updateOperationState("Safe")
+                operationState:set("Safe")
             end
 
         end
@@ -309,36 +136,39 @@ function DetectionController:Render()
     
     Character.ChildRemoved:Connect(function(child)
         if child:IsA("Tool") then
-            updateOperationState("Safe")
+            operationState:set("Safe")
         end
     end)
 
-    
+    -- firing shots
     LocalPlayer:GetAttributeChangedSignal("shotsFired"):Connect(function()
         if LocalPlayer:GetAttribute("shotsFired") == true then
-            updateOperationState("Compromised")
+            operationState:set("Compromised")
         end
     end)
     
-    Character.Humanoid.Died:Connect(function()
+    -- removing character, which unbinds render step
+    LocalPlayer.CharacterRemoving:Connect(function()
         RunService:UnbindFromRenderStep("Detection")
     end)
     
+    -- disguise
     LocalPlayer:GetAttributeChangedSignal("disguisedForRegion"):Connect(function()
         if LocalPlayer:GetAttribute("disguisedForRegion") ~= "" then
-            updateLocationState("Safe")
+            locationState:set("Safe")
         end
     end)
     
+    -- proximity prompt
     ProximityPromptService.PromptButtonHoldBegan:Connect(function(prompt, player)
         if prompt.Name == "NPCPrompt" then
-            updateOperationState("Illegal Action")
+            operationState:set("Illegal Action")
         end
     end)
     
     ProximityPromptService.PromptButtonHoldEnded:Connect(function(prompt, player)
         if prompt.Name == "NPCPrompt" then
-            updateOperationState("Safe")
+            operationState:set("Safe")
         end
     end)
 end

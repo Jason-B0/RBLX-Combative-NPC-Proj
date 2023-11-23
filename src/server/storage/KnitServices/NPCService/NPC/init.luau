@@ -12,18 +12,10 @@ local Types = require(ReplicatedStorage.Shared.Types)
 
 local TAG_NAME = "NPC"
 
-local DETECTION_DISTANCE = {
-    DAY_OUTDOOR = 100,
-    NIGHT_OUTDOOR = 50,
-    BRIGHT_INDOOR = 70,
-    DARK_INDOOR = 10,
-}
 
 local WAYPOINT_FOLDER = workspace.NPC_Waypoints :: Folder
 local TRACKING_FOLDER = WAYPOINT_FOLDER.TrackingFolder :: Folder
 local EVADE_FOLDER = WAYPOINT_FOLDER.EvadeWaypoints :: Folder
-
-local IGNORED_TEAM_COLOR = BrickColor.new("Crimson")
 
 local TokenService, NPCService
 task.spawn(function() -- Knit initialization
