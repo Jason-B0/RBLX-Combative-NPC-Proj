@@ -51,6 +51,17 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
     -- set up NPC pre-determined attributes
     npcModel:SetAttribute("Tag", token)
     npcModel:SetAttribute("Class", GetNewNPCClass(class))
+    
+    if class == "Police" then
+        h.Shirt = 3523480603
+        h.Pants = 11925065255
+    elseif class == "Dock Worker" or class == "Dock Admin" then
+        h.Shirt = 12963661140
+        h.Pants = 6385501369
+    elseif class == "Cartel" then
+        h.Shirt = 6385493065
+        h.Pants = 6385501369
+    end
 
     return npcModel
 end

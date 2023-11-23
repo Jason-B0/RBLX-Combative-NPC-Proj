@@ -1,8 +1,7 @@
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-
+local ProximityPromptService = game:GetService("ProximityPromptService")
 local Knit = require(game:GetService("ReplicatedStorage").Packages.Knit)
 local Signal = require(game:GetService("ReplicatedStorage").Packages.Signal)
 local Types = require(game:GetService("ReplicatedStorage").Shared.Types)
@@ -30,6 +29,7 @@ local DetectionController = Knit.CreateController({
     npcsInFOV = {},
 })
 
+local LocalPlayer = Players.LocalPlayer
 local Character
 
 --============ CONFIG =====================
@@ -38,7 +38,6 @@ local PLAYER_ATTRIBUTES = {
     locationState = "Safe" :: "Safe" | "Trespassing" | "Restricted" | "Hostile Area",
     operationState = "Safe" :: "Safe" | "Abnormal Action" | "Illegal Action" | "Armed" | "Compromised",
     disguisedForRegion = "",
-    armed = false,
     shotsFired = false,
     
 }
@@ -69,7 +68,7 @@ local function npcCanSeePlayer(npc: Types.NPCModel, disregardFOV: boolean?): boo
         local raycastParams = RaycastParams.new()
         raycastParams.FilterType = Enum.RaycastFilterType.Exclude
         raycastParams.FilterDescendantsInstances =
-            { charModel, LocalPlayer.Character }
+            { charModel, Character }
         local result = workspace:Raycast(start, targ - start, raycastParams)
         
         if result ~= nil then
@@ -121,6 +120,22 @@ end
 
 
 --==========================================
+local function updateOperationState(newState: string?)
+    if newState ~= nil then
+        LocalPlayer:SetAttribute("operationState", newState)
+    else
+        LocalPlayer:SetAttribute("operationState", "Safe")
+    end
+end
+
+local function updateLocationState(newState: string?)
+    if newState ~= nil then
+        LocalPlayer:SetAttribute("locationState", newState)
+    else
+        LocalPlayer:SetAttribute("locationState", "Safe")
+    end
+end
+
 local function determineNPCAggroState(): string
     local locationState = LocalPlayer:GetAttribute("locationState")
     local operationState = LocalPlayer:GetAttribute("operationState")
@@ -208,43 +223,11 @@ local function determineNPCAggroState(): string
 end
 
 function DetectionController:Render()
-    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local torso = character:WaitForChild("Torso") :: BasePart
+    local torso = Character:WaitForChild("Torso") :: BasePart
     local overlapParams = OverlapParams.new()
     overlapParams.FilterType = Enum.RaycastFilterType.Whitelist
     overlapParams.MaxParts = 5
     overlapParams.FilterDescendantsInstances = {torso}
-    
-    local function updateState()
-        local locationState = LocalPlayer:GetAttribute("locationState")
-        local operationState = LocalPlayer:GetAttribute("operationState")
-        
-        -- if player is completely safe, and they are not compromised, then all NPCs are removed from the table
-        
-        if locationState == "Safe" and operationState == "Safe" then
-            for _, npcModel in pairs(self.npcsInFOV) do
-                if npcModel:GetAttribute("State") == "Alert" or npcModel:GetAttribute("State") == "Hostile" then
-                    return
-                end
-            end
-        end
-    end
-    
-    --===== UPDATE OPERATION STATE =====
-    LocalPlayer.Character.ChildAdded:Connect(function(child)
-        if child:IsA("Tool") and child:GetAttribute("ToolType") == "Gun" then
-            LocalPlayer:SetAttribute("operationState", "Armed")
-        end
-    end)
-    
-    LocalPlayer:GetAttributeChangedSignal("shotsFired"):Connect(function()
-        if LocalPlayer:GetAttribute("shotsFired") == true then
-            LocalPlayer:SetAttribute("operationState", "Compromised")
-        end
-    end)
-    
-    LocalPlayer:GetAttributeChangedSignal("locationState"):Connect(updateState)
-    LocalPlayer:GetAttributeChangedSignal("operationState"):Connect(updateState)
     
     RunService:BindToRenderStep("Detection", Enum.RenderPriority.Camera.Value, function()
         
@@ -253,47 +236,48 @@ function DetectionController:Render()
             local partsInRegion = workspace:GetPartBoundsInBox(regionBounds.CFrame, regionBounds.Size, overlapParams)
             if #partsInRegion > 0 then
                 if LocalPlayer:GetAttribute("disguisedForRegion") ~= regionName then
-                    LocalPlayer:SetAttribute("locationState", "Trespassing")
+                    updateLocationState("Trespassing")
                     break
                 else
-                    LocalPlayer:SetAttribute("locationState", "Safe")
+                    updateLocationState("Safe")
                 end
             else
-                LocalPlayer:SetAttribute("locationState", "Safe")
+                updateLocationState("Safe")
             end
         end
         
-        
-        
         --=== UPDATE AGGRO STATE ===
         local goalAggroState = determineNPCAggroState()
-        
+            
         if goalAggroState ~= "Safe" then
             for _, npcModel in pairs(self.NPCs) do
             
+                local npcTag = npcModel:GetAttribute("Tag")
                 local npcInFOV = npcCanSeePlayer(npcModel)
-                            
-                -- if NPC is in range and not already in the table, add it to the table
+                
+                -- if NPC is in FOV and not already in the table, add it to the table
                 if npcInFOV == true then
                     
                     -- if NPC is not already in the table, add it to the table
-                    if (not self.npcsInFOV[npcModel:GetAttribute("Tag")]) then
-                        self.npcsInFOV[npcModel:GetAttribute("Tag")] = npcModel
+                    if (not self.npcsInFOV[npcTag]) then
+                        self.npcsInFOV[npcTag] = npcModel
                     end
     
                     -- update aggro state if it is not the same as the goal aggro state, e.g. it is elevated
-                    if self.npcsInFOV[npcModel:GetAttribute("Tag")]:GetAttribute("State") ~= goalAggroState then
-                        NPCService:AggrovateNPC(npcModel:GetAttribute("Tag"), goalAggroState)
+                    if self.npcsInFOV[npcTag]:GetAttribute("State") ~= goalAggroState then
+                        NPCService:AggrovateNPC(npcTag, goalAggroState)
                     end
                     
                 -- if NPC is no longer in FOV, and it is in table, remove it from the table
-                elseif npcInFOV ~= true and self.npcsInFOV[npcModel:GetAttribute("Tag")] ~= nil then
+                elseif 
+                    (npcInFOV ~= true and self.npcsInFOV[npcTag] ~= nil)
+                then
                     
-                    if self.npcsInFOV[npcModel:GetAttribute("Tag")]:GetAttribute("State") ~= "Hostile" 
-                    and self.npcsInFOV[npcModel:GetAttribute("Tag")]:GetAttribute("State") ~= "Alert" 
+                    if self.npcsInFOV[npcTag]:GetAttribute("State") ~= "Hostile" 
+                    and self.npcsInFOV[npcTag]:GetAttribute("State") ~= "Alert" 
                     then
-                        self.npcsInFOV[npcModel:GetAttribute("Tag")] = nil
-                        NPCService:AggrovateNPC(npcModel:GetAttribute("Tag"), "Safe")
+                        self.npcsInFOV[npcTag] = nil
+                        NPCService:AggrovateNPC(npcTag, "Safe")
                     end 
                     
                 end
@@ -304,7 +288,59 @@ function DetectionController:Render()
         
     end)
     
+    --===== UPDATE OPERATION STATE AND BIND LISTENERS =====
     
+    -- equipping and unequipping tool
+    Character.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") then
+            print(child:GetAttribute("ToolType"))
+            local toolType = child:GetAttribute("ToolType") :: string
+            
+            if toolType == "Gun" then
+                updateOperationState("Armed")
+            elseif toolType == "Misc" then
+                updateOperationState("Abnormal Action")
+            else
+                updateOperationState("Safe")
+            end
+
+        end
+    end)
+    
+    Character.ChildRemoved:Connect(function(child)
+        if child:IsA("Tool") then
+            updateOperationState("Safe")
+        end
+    end)
+
+    
+    LocalPlayer:GetAttributeChangedSignal("shotsFired"):Connect(function()
+        if LocalPlayer:GetAttribute("shotsFired") == true then
+            updateOperationState("Compromised")
+        end
+    end)
+    
+    Character.Humanoid.Died:Connect(function()
+        RunService:UnbindFromRenderStep("Detection")
+    end)
+    
+    LocalPlayer:GetAttributeChangedSignal("disguisedForRegion"):Connect(function()
+        if LocalPlayer:GetAttribute("disguisedForRegion") ~= "" then
+            updateLocationState("Safe")
+        end
+    end)
+    
+    ProximityPromptService.PromptButtonHoldBegan:Connect(function(prompt, player)
+        if prompt.Name == "NPCPrompt" then
+            updateOperationState("Illegal Action")
+        end
+    end)
+    
+    ProximityPromptService.PromptButtonHoldEnded:Connect(function(prompt, player)
+        if prompt.Name == "NPCPrompt" then
+            updateOperationState("Safe")
+        end
+    end)
 end
 
 --==========================================
@@ -324,6 +360,10 @@ function DetectionController:KnitInit()
 end
 
 function DetectionController:KnitStart()
+    -- wait for character to load
+    if not LocalPlayer.Character then LocalPlayer.CharacterAdded:Wait() end
+    Character = LocalPlayer.Character
+    
     -- Initialize service
     NPCService = Knit.GetService("NPCService")
     
@@ -338,11 +378,20 @@ function DetectionController:KnitStart()
         self.NPCs[npcModel:GetAttribute("Tag")] = npcModel
     end)
     
+    -- wait for character to load, then set up player
+    LocalPlayer.CharacterAdded:Connect(function(character)
+        for i, v in pairs(PLAYER_ATTRIBUTES) do
+            LocalPlayer:SetAttribute(tostring(i), v)
+        end
+        DetectionController:Render()
+    end)
+    
+    -- on first start
     for i, v in pairs(PLAYER_ATTRIBUTES) do
         LocalPlayer:SetAttribute(tostring(i), v)
     end
-    
     DetectionController:Render()
+    
 end
 
 return DetectionController

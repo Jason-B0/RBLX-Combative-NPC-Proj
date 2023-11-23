@@ -50,6 +50,18 @@ function NPCService:AggrovateNPC(player: Player, npcTag: string, newState: strin
     end
 end
 
+-- NPC kill
+function NPCService.Client:KillNPC(_: Player, npcTag: string)
+    return self.Server:KillNPC(npcTag)
+end
+
+function NPCService:KillNPC(npcTag: string)
+    local npc = self.NPCs[npcTag]
+    if npc then
+        npc:FindFirstChildOfClass("Humanoid").Health = 0
+    end
+end
+
 -- NPC creation
 function NPCService:CreateNewNPC(class: string?)
     local newNPCModel = Asset.NPC:Clone()
@@ -89,8 +101,6 @@ end
 function NPCService:KnitInit()
     PhysicsService:RegisterCollisionGroup("NPC")
     PhysicsService:CollisionGroupSetCollidable("NPC", "NPC", false)
-	
-	
 	
 end
 

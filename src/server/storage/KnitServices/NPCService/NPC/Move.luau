@@ -10,7 +10,7 @@ local PATHFINDING_PARAM = {
     AgentHeight = 8,
     AgentCanJump = true,
     AgentCanClimb = true,
-    WaypointSpacing = 3,
+    WaypointSpacing = 10,
     Costs = {
         Concrete = 4,
         Rock = 5,
@@ -35,6 +35,7 @@ return function(self, destination: Types.Waypoint | BasePart)
             
             if path.Status ~= Enum.PathStatus.Success then
                 warn("Could not calculate path\nDestination: " .. destination:GetAttribute("WaypointToken"))
+                task.wait(0.5)
                 reject()
             end
 
