@@ -25,6 +25,8 @@ task.spawn(function() -- Knit initialization
 end)
 
 --=========== NPC FUNCTIONS ================
+local Helper = script.Helper
+local Modules = script.Modules 
 local SetupModel = require(script.SetupModel)
 local Move = require(script.Move)
 local HeadTrackPlayer = require(script.HeadTrackPlayer)

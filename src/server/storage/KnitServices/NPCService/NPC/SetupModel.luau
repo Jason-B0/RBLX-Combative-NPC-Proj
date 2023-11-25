@@ -1,5 +1,7 @@
 --!strict
 local Types = require(game:GetService("ReplicatedStorage").Shared.Types)
+local Helper = script.Parent.Helper
+local Modules = script.Parent.Modules
 --=========== CONFIG ================
 local NPC_DEFAULT_ATTRIBUTES = {
 	State = "Safe",
@@ -16,8 +18,8 @@ local NPC_DEFAULT_ATTRIBUTES = {
 }
 
 --=========== NPC CREATION HELPERS ================
-local GetNewNPCClass = require(script.Parent.GetNewNPCClass)
-local NPCAppearance = require(script.Parent.NPCAppearance)
+local GetNewNPCClass = require(Helper.GetNewNPCClass)
+local NPCAppearance = require(Modules.NPCAppearance)
 
 --=========== MODULE ================
 return function(npcModel: Types.NPCModel, token: string, class: string?)
@@ -26,10 +28,12 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
     -- set up NPC appearance
     local h: HumanoidDescription = Instance.new("HumanoidDescription", npcModel.Humanoid) :: HumanoidDescription
     h.Face = NPCAppearance:GetAsset("Face")
-    --h.FaceAccessory = NPCAppearance:GetAsset("FaceAccessories")
+    
+    h.FrontAccessory = table.unpack(NPCAppearance:GetAsset("FrontAccessories") :: table)
+    h.FaceAccessory = table.unpack(NPCAppearance:GetAsset("FaceAccessories") :: table)
     h.HairAccessory = NPCAppearance:GetAsset("Hair")
 
-    local bodyColor = NPCAppearance:GetAsset("BodyColor")
+    local bodyColor = NPCAppearance:GetAsset("BodyColor") :: Color3
     h.HeadColor = bodyColor
     h.LeftArmColor = bodyColor
     h.RightArmColor = bodyColor
@@ -37,8 +41,9 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
     h.RightLegColor = bodyColor
     h.TorsoColor = bodyColor
 
-    h.Shirt = NPCAppearance:GetAsset("Shirt") :: Shirt
-    h.Pants = NPCAppearance:GetAsset("Pants") :: Pants
+    h.Shirt = NPCAppearance:GetAsset("Shirt") :: number
+    h.Pants = NPCAppearance:GetAsset("Pants") :: number
+    
 
     npcModel.Humanoid:ApplyDescriptionReset(h, Enum.AssetTypeVerification.Default)
     npcModel.HumanoidRootPart:SetNetworkOwner(nil)
@@ -51,17 +56,6 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
     -- set up NPC pre-determined attributes
     npcModel:SetAttribute("Tag", token)
     npcModel:SetAttribute("Class", GetNewNPCClass(class))
-    
-    if class == "Police" then
-        h.Shirt = 3523480603
-        h.Pants = 11925065255
-    elseif class == "Dock Worker" or class == "Dock Admin" then
-        h.Shirt = 12963661140
-        h.Pants = 6385501369
-    elseif class == "Cartel" then
-        h.Shirt = 6385493065
-        h.Pants = 6385501369
-    end
 
     return npcModel
 end
