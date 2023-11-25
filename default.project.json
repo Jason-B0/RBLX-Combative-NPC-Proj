@@ -64,6 +64,10 @@
         }
       },
       
+      "NPC": {
+        "$className": "Folder"
+      },
+      
       "GAME_WORKSPACE": {
         "$className": "Folder",
         "$ignoreUnknownInstances": true,

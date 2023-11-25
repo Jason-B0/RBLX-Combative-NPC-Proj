@@ -17,10 +17,14 @@ local NPCControlService = Knit.CreateService({
     Client = {},
     
 	Config_Test = {
-		["Civilian"] = 3,
-		["Police"] = 2,
+		
+		isMoveEnabled = false,
+		isAttackEnabled = false,
+		
+		["Civilian"] = 0,
+		["Police"] = 1,
 		["Cartel"] = 0,
-		["Dock Worker"] = 2,
+		["Dock Worker"] = 0,
 		["Dock Admin"] =  0,
 	},
 	

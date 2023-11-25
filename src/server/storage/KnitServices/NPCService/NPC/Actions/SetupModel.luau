@@ -1,7 +1,7 @@
 --!strict
 local Types = require(game:GetService("ReplicatedStorage").Shared.Types)
-local Helper = script.Parent.Helper
-local Assets = script.Parent.Assets
+local Helper = script.Parent.Parent.Helper
+local Assets = script.Parent.Parent.Assets
 --=========== CONFIG ================
 local NPC_DEFAULT_ATTRIBUTES = {
 	State = "Safe",

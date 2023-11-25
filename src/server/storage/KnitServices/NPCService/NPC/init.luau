@@ -25,12 +25,13 @@ end)
 
 --=========== NPC FUNCTIONS ================
 local Helper = script.Helper
-local Assets = script.Assets 
-local SetupModel = require(script.SetupModel)
-local Move = require(script.Move)
-local HeadTrackPlayer = require(script.HeadTrackPlayer)
-local UpdateIndicator = require(script.UpdateIndicator)
-
+local Assets = script.Assets
+local Actions = script.Actions
+local SetupModel = require(Actions.SetupModel)
+local Move = require(Actions.Move)
+local HeadTrackPlayer = require(Actions.HeadTrackPlayer)
+local UpdateIndicator = require(Actions.UpdateIndicator)
+local Combat = require(Actions.Combat)
 --=========== HELPERS ======================
 local function determineNextWaypoint(npc: Types.NPCModel, targetPart: BasePart?, isEvading: boolean?): string
     

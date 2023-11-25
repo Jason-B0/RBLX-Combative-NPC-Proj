@@ -16,6 +16,15 @@ export type NPCModel = Model & {
     StateBillboard: BillboardGui & {
         StateIndicator: ImageLabel,
     },
+    Weapon: nil | (Tool & {
+        Gun: Model & {
+            Handle: BasePart?,
+            Grip: BasePart?,
+            Muzzle: BasePart,
+        },
+        Animation: ModuleScript,
+        Setting: ModuleScript,
+    }),
     
     -- Attributes
     Class: string,
@@ -25,6 +34,13 @@ export type NPCModel = Model & {
     playerToTrack: string,
     State: "Safe" | "Curious" | "Suspicious" | "Alert" | "Hostile",
     
+}
+
+export type NPC = {
+    NPCModel: NPCModel,   
+    NPCType: string,
+    ThisNPCFinishedMoving: Signal<T...>,
+    PlayerCurrentlyBeingTracked: Player,
 }
 
 export type Waypoint = BasePart & {
