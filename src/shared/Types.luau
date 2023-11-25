@@ -16,15 +16,7 @@ export type NPCModel = Model & {
     StateBillboard: BillboardGui & {
         StateIndicator: ImageLabel,
     },
-    Weapon: nil | (Tool & {
-        Gun: Model & {
-            Handle: BasePart?,
-            Grip: BasePart?,
-            Muzzle: BasePart,
-        },
-        Animation: ModuleScript,
-        Setting: ModuleScript,
-    }),
+    Weapon: WeaponTool?,
     
     -- Attributes
     Class: string,
@@ -34,6 +26,20 @@ export type NPCModel = Model & {
     playerToTrack: string,
     State: "Safe" | "Curious" | "Suspicious" | "Alert" | "Hostile",
     
+}
+
+export type WeaponTool = Tool & {
+	Gun: Model & {
+		Handle: BasePart & {
+			Muzzle: Attachment & {
+				["FlashFX[Flash]"]: ParticleEmitter,
+				["FlashFX[Light]"]: PointLight,
+				Smoke: ParticleEmitter,
+			}
+		},
+	},	
+	Animation: ModuleScript,
+    Settings: ModuleScript,
 }
 
 export type NPC = {

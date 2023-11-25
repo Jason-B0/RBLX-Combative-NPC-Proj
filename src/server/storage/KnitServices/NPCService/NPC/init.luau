@@ -23,6 +23,7 @@ task.spawn(function() -- Knit initialization
     end)
 end)
 
+type Promise = typeof(Promise.new(function() end))
 --=========== NPC FUNCTIONS ================
 local Helper = script.Helper
 local Assets = script.Assets
@@ -129,18 +130,17 @@ local function findWaypointGivenToken(waypointToken:string)
     end
 end
 
-local function disconnectAllPromises(...)
-    local args = {...}
-    
-    for _, promise in pairs(args) do
-        if promise ~= nil and promise:getStatus() == "Started" then
+local function disconnectAllPromises(prom: {[any]: Promise})
+    for _, promise: Promise in pairs(prom) do
+        if promise ~= nil and promise:getStatus() == "Started" then    
             promise:cancel()
+            promise = nil
         end
     end
 end
 
-local function disconnectAllConnections(conn: {})
-    for _, connection: RBXScriptConnection in pairs(conn) do
+local function disconnectAllConnections(conn: {[any]: RBXScriptConnection})
+    for _, connection: RBXScriptConnection | nil in pairs(conn) do
         if connection ~= nil then    
             connection:Disconnect()
             connection = nil
@@ -201,16 +201,19 @@ end
 
 
 function NPC:Active()
-    local lookPromise = nil
-    local movePromise = nil
-    local innerMovePromise = nil
-    local innerLookPromise = nil
-    local statePromise = nil
+    local promises = {
+        statePromise = nil :: Promise,
+        movePromise = nil :: Promise,
+        innerMovePromise = nil :: Promise,
+        innerLookPromise = nil :: Promise,
+        combatPromise = nil :: Promise,
+    }
     
     local connections = {
         stateChangeConnection = nil :: RBXScriptConnection,
         waypointChangeConnection = nil :: RBXScriptConnection,
         lookAtChangeConnection = nil :: RBXScriptConnection,
+        combatConnection = nil :: RBXScriptConnection,
     }
     -- listen for NPC's state changing signal
     -- every other mechanism depends on this
@@ -224,14 +227,14 @@ function NPC:Active()
 
         UpdateIndicator(self, newState)
         
-        if statePromise then
-            statePromise:cancel()
+        if promises.statePromise then
+            promises.statePromise:cancel()
         end
         
-        statePromise = Promise.new(function(resolve, reject, onCancel)
+        promises.statePromise = Promise.new(function(resolve, reject, onCancel)
             
             if onCancel(function()
-                statePromise:cancel()
+                promises.statePromise:cancel()
             end) then
                 return
             end
@@ -253,10 +256,25 @@ function NPC:Active()
                 
             elseif newState == "Alert" then
                 self.NPCModel:SetAttribute("compromised", true)
-                
+                if promises.movePromise ~= nil and promises.movePromise:getStatus() ~= "Started" then
+                    promises.movePromise:cancel()
+                    task.wait(1)
+                end
                 if npcClass == "Police" or npcClass == "Cartel" then
                     nextWaypoint = determineNextWaypoint(self.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
                     
+                    if promises.combatPromise ~= nil and promises.combatPromise:getStatus() == "Started" then
+                        promises.combatPromise:cancel()
+                    end
+                    
+                    promises.combatPromise = Combat(self, playerToTrack)
+                    
+                    task.delay(2, function()
+                        if self.NPCModel.Humanoid.Health > 0 then
+                            self.NPCModel:SetAttribute("playerToLookAt", nil)
+                            self.NPCModel:SetAttribute("State", "Hostile")
+                        end
+                    end)
                 else
                     nextWaypoint = determineNextWaypoint(self.NPCModel, nil, true)
                     
@@ -274,9 +292,17 @@ function NPC:Active()
                 
             elseif newState == "Hostile" then
                 self.NPCModel:SetAttribute("compromised", true)
+                if promises.movePromise ~= nil and promises.movePromise:getStatus() ~= "Started" then
+                    promises.movePromise:cancel()
+                    task.wait(1)
+                end
                 if npcClass == "Police" or npcClass == "Cartel" then
                     nextWaypoint = determineNextWaypoint(self.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
                     
+                    if promises.combatPromise ~= nil and promises.combatPromise:getStatus() ~= "Started" then
+                        promises.combatPromise = Combat(self, playerToTrack)
+                    end
+
                 else
                     nextWaypoint = determineNextWaypoint(self.NPCModel, nil, true)
                     
@@ -298,13 +324,13 @@ function NPC:Active()
         
         local waypoint = findWaypointGivenToken(self.NPCModel:GetAttribute("NextWaypointToken"))
         
-        -- cancel any previous movePromise
-        if movePromise ~= nil and movePromise:getStatus() == "Started" then
-            movePromise:cancel()
+        -- cancel any previous promises.movePromise
+        if promises.movePromise ~= nil and promises.movePromise:getStatus() == "Started" then
+            promises.movePromise:cancel()
         end
         
-        -- create new movePromise
-        movePromise = Promise.new(function(resolve, reject, onCancel)
+        -- create new promises.movePromise
+        promises.movePromise = Promise.new(function(resolve, reject, onCancel)
             
             local function computePath()
                 task.delay(math.random(1, 5), function()
@@ -314,22 +340,22 @@ function NPC:Active()
                 resolve()
             end
             
-            innerMovePromise = Move(self, waypoint)
+            promises.innerMovePromise = Move(self, waypoint)
             
-            -- if cancelled, cancel innerMovePromise
+            -- if cancelled, cancel promises.innerMovePromise
             if onCancel(function()
-                innerMovePromise:cancel()
+                promises.innerMovePromise:cancel()
             end) then
                 return
             end
             
             -- catch path rejections
-            innerMovePromise:catch(function()
+            promises.innerMovePromise:catch(function()
                 computePath()
             end)
             
             -- wait for it to resolve
-            innerMovePromise:andThen(computePath, computePath)
+            promises.innerMovePromise:andThen(computePath, computePath)
             
             
         end)
@@ -345,27 +371,27 @@ function NPC:Active()
                 nil 
             :: Player | nil
         
-        -- cancel any previous lookPromise
-        if lookPromise ~= nil and self.PlayerCurrentlyBeingTracked ~= targetPlayer then
-            lookPromise:cancel()
+        -- cancel any previous promises.lookPromise
+        if promises.lookPromise ~= nil and self.PlayerCurrentlyBeingTracked ~= targetPlayer then
+            promises.lookPromise:cancel()
         end
         
         -- set new player to track
         self.PlayerCurrentlyBeingTracked = targetPlayer
         
-        -- create new lookPromise
+        -- create new promises.lookPromise
         if self.PlayerCurrentlyBeingTracked ~= nil then
-            lookPromise = Promise.new(function(resolve, reject, onCancel)
+            promises.lookPromise = Promise.new(function(resolve, reject, onCancel)
                 
-                innerLookPromise = HeadTrackPlayer(self, self.PlayerCurrentlyBeingTracked)
+                promises.innerLookPromise = HeadTrackPlayer(self, self.PlayerCurrentlyBeingTracked)
                 
                 if onCancel(function()
-                    innerLookPromise:cancel()
+                    promises.innerLookPromise:cancel()
                 end) then
                     return
                 end
                 
-                innerLookPromise:await()
+                promises.innerLookPromise:await()
                 
             end)
                 
@@ -376,7 +402,7 @@ function NPC:Active()
     -- listen for death
     self.NPCModel.Humanoid.Died:Connect(function()
         ragdollOnDeath(self.NPCModel)
-        disconnectAllPromises(statePromise, movePromise, lookPromise)
+        disconnectAllPromises(promises)
         UpdateIndicator(self, "Safe")
         disconnectAllConnections(connections)
     end)
@@ -384,7 +410,7 @@ function NPC:Active()
     -- listen for NPC's parent changing signal
     self.NPCModel.AncestryChanged:Connect(function()
         UpdateIndicator(self, "Safe")
-        disconnectAllPromises(statePromise, movePromise, lookPromise)
+        disconnectAllPromises(promises)
         CollectionService:RemoveTag(self.NPCModel, TAG_NAME)
         if not self.NPCModel:IsDescendantOf(workspace) then
         disconnectAllConnections(connections)

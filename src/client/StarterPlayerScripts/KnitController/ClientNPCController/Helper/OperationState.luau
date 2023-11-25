@@ -1,16 +1,17 @@
 local LocalPlayer = game:GetService("Players").LocalPlayer
 
-return {
+local OperationState = {}
 
-    update = function(newState: string?)
-        if newState ~= nil then
-            LocalPlayer:SetAttribute("operationState", newState)
-        else
-            LocalPlayer:SetAttribute("operationState", "Safe")
-        end
-    end,
+function OperationState:set(newState: string?)
+    if newState ~= nil then
+        LocalPlayer:SetAttribute("operationState", newState)
+    else
+        LocalPlayer:SetAttribute("operationState", "Safe")
+    end
+end
 
-    get = function(): string
-        return LocalPlayer:GetAttribute("operationState")
-    end,
-}
+function OperationState:get(): string
+    return LocalPlayer:GetAttribute("operationState")
+end
+
+return OperationState

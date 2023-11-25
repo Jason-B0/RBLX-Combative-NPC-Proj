@@ -11,6 +11,7 @@ local ClientNPCController = Knit.CreateController({
     Name = "ClientNPCController",
 
     NPC_TAG_NAME = "NPC",
+    IGNORED_TEAM_COLOR = BrickColor.new("Maroon"),
     NPCs = {},
     
     REGIONS = {},
@@ -24,8 +25,8 @@ local Character
 --============ CONFIG =====================
 local PLAYER_ATTRIBUTES = {
     
-    locationState = "Safe" :: "Safe" | "Trespassing" | "Restricted" | "Hostile Area",
-    operationState = "Safe" :: "Safe" | "Abnormal Action" | "Illegal Action" | "Armed" | "Compromised",
+    locationState = "Safe",
+    operationState = "Safe",
     disguisedForRegion = "",
     shotsFired = false,
     
@@ -42,12 +43,11 @@ local operationState = require(Helper.OperationState)
 function ClientNPCController:Render()
     local torso = Character:WaitForChild("Torso") :: BasePart
     local overlapParams = OverlapParams.new()
-    overlapParams.FilterType = Enum.RaycastFilterType.Whitelist
+    overlapParams.FilterType = Enum.RaycastFilterType.Include
     overlapParams.MaxParts = 5
     overlapParams.FilterDescendantsInstances = {torso}
     
     RunService:BindToRenderStep("Detection", Enum.RenderPriority.Camera.Value, function()
-        
         -- Ignore if player is on the ignored team color
         if LocalPlayer.TeamColor == ClientNPCController.IGNORED_TEAM_COLOR then
             
@@ -175,11 +175,9 @@ end
 
 --==========================================
 function ClientNPCController:KnitInit()
-    if not LocalPlayer.Character then
-        Character = LocalPlayer.CharacterAdded:Wait()
-    else
-        Character = LocalPlayer.Character
-    end
+    -- wait for character to load
+    if not LocalPlayer.Character then LocalPlayer.CharacterAdded:Wait() end
+    Character = LocalPlayer.Character
         
     -- set up regions
     for _, regionPart: BasePart in pairs(workspace:FindFirstChild("Regions"):GetChildren()) do
@@ -198,9 +196,6 @@ function ClientNPCController:KnitInit()
 end
 
 function ClientNPCController:KnitStart()
-    -- wait for character to load
-    if not LocalPlayer.Character then LocalPlayer.CharacterAdded:Wait() end
-    Character = LocalPlayer.Character
     
     -- Initialize service
     NPCService = Knit.GetService("NPCService")
