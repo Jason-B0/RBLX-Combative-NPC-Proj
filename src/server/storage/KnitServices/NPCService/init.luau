@@ -11,6 +11,7 @@ local CollectionService = game:GetService("CollectionService")
 local PhysicsService = game:GetService("PhysicsService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 local Workspace = game:GetService("Workspace")
 
@@ -85,7 +86,6 @@ function NPCService:KnitStart()
 
 	-- set up all waypoint to be tagged with a token
 	for _, waypoint: Types.Waypoint in pairs(workspace.NPC_Waypoints:GetDescendants()) do
-		
 		if waypoint:IsA("BasePart") then
 			waypoint:SetAttribute("WaypointToken", TokenService:GenerateToken("wp"))
 		end
@@ -99,9 +99,48 @@ function NPCService:KnitStart()
 end
 
 function NPCService:KnitInit()
-    PhysicsService:RegisterCollisionGroup("NPC")
-    PhysicsService:CollisionGroupSetCollidable("NPC", "NPC", false)
-	
+    if workspace.GAME_WORKSPACE:FindFirstChild("NPCAvoid") then
+        for _, v: BasePart | Model in pairs(workspace.GAME_WORKSPACE.NPCAvoid:GetChildren()) do
+            local size
+            if v:IsA("Model") then
+                if v.PrimaryPart == nil then
+                    size = v:GetExtentsSize()
+                else
+                    size = v.PrimaryPart.Size
+                end
+            elseif v:IsA("BasePart") then
+                size = v.Size
+            end
+            
+            if size == nil then continue end
+            
+            local newPart = Instance.new("Part")
+            newPart.Name = "NPCAvoid"
+            newPart.Size = size + Vector3.new(2,5,2)
+            newPart.Locked = true
+            newPart.Anchored = true
+            newPart.CastShadow = false
+            newPart.TopSurface = Enum.SurfaceType.Smooth
+            newPart.BottomSurface = Enum.SurfaceType.Smooth
+            newPart.LeftSurface = Enum.SurfaceType.Smooth
+            newPart.RightSurface = Enum.SurfaceType.Smooth
+            newPart.FrontSurface = Enum.SurfaceType.Smooth
+            newPart.BackSurface = Enum.SurfaceType.Smooth
+            newPart.CanCollide = false
+            newPart.Color = Color3.fromRGB(225,225,0)
+            newPart.Transparency = if RunService:IsStudio() then .8 else 1
+            newPart.Parent = workspace.GAME_WORKSPACE.NPCAvoid:FindFirstChildOfClass("Folder")
+            newPart:PivotTo(v:GetPivot())
+            
+            local pathfindingModifier = Instance.new("PathfindingModifier")
+            pathfindingModifier.Name = "NPCAvoid"
+            pathfindingModifier.Label = "NPCAvoid"
+            pathfindingModifier.PassThrough = false
+            pathfindingModifier.Parent = newPart
+        
+        end
+    end
+    
 end
 
 return NPCService

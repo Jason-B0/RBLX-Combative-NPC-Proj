@@ -12,7 +12,6 @@ local Types = require(ReplicatedStorage.Shared.Types)
 
 local TAG_NAME = "NPC"
 
-
 local WAYPOINT_FOLDER = workspace.NPC_Waypoints :: Folder
 local TRACKING_FOLDER = WAYPOINT_FOLDER.TrackingFolder :: Folder
 local EVADE_FOLDER = WAYPOINT_FOLDER.EvadeWaypoints :: Folder
@@ -26,7 +25,7 @@ end)
 
 --=========== NPC FUNCTIONS ================
 local Helper = script.Helper
-local Modules = script.Modules 
+local Assets = script.Assets 
 local SetupModel = require(script.SetupModel)
 local Move = require(script.Move)
 local HeadTrackPlayer = require(script.HeadTrackPlayer)
@@ -173,6 +172,8 @@ local NPC = {}
 NPC.__index = NPC
 
 function NPC.new(npcModel: Types.NPCModel, class: string?)
+    Knit.OnStart():awaitStatus()
+    TokenService = Knit.GetService("TokenService")
 	local newNPC = {}
     
     newNPC.NPCModel = nil :: Types.NPCModel

@@ -6,16 +6,18 @@ local Types = require(ReplicatedStorage.Shared.Types)
 --============================
 
 local PATHFINDING_PARAM = {
-    AgentRadius = 4,
+    AgentRadius = 5,
     AgentHeight = 8,
     AgentCanJump = true,
     AgentCanClimb = true,
-    WaypointSpacing = 10,
+    WaypointSpacing = 5,
     Costs = {
         Concrete = 4,
         Rock = 5,
         Asphalt = 10,
-        Grass = 20
+        Grass = 20,
+        
+        NPCAvoid = math.huge,
     }
 }
 --============================

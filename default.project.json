@@ -62,6 +62,19 @@
           "$className": "Folder",
           "$ignoreUnknownInstances": true
         }
+      },
+      
+      "GAME_WORKSPACE": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": true,
+        "InvisWalls": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": true
+        },
+        "NPCAvoid": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": true
+        }
       }
         
       

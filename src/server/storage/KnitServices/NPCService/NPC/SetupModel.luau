@@ -1,7 +1,7 @@
 --!strict
 local Types = require(game:GetService("ReplicatedStorage").Shared.Types)
 local Helper = script.Parent.Helper
-local Modules = script.Parent.Modules
+local Assets = script.Parent.Assets
 --=========== CONFIG ================
 local NPC_DEFAULT_ATTRIBUTES = {
 	State = "Safe",
@@ -19,19 +19,25 @@ local NPC_DEFAULT_ATTRIBUTES = {
 
 --=========== NPC CREATION HELPERS ================
 local GetNewNPCClass = require(Helper.GetNewNPCClass)
-local NPCAppearance = require(Modules.NPCAppearance)
+local NPCAppearance = require(Assets.NPCAppearance)
+
+local function convertToString(accessories: table): string
+	assert(type(accessories) == "table", "accessories must be a table")
+    local allAccessories = ""
+    for _, accessoryId: string in pairs(accessories) do
+        allAccessories = allAccessories .. accessoryId .. ","
+    end
+	return allAccessories
+end
 
 --=========== MODULE ================
 return function(npcModel: Types.NPCModel, token: string, class: string?)
     npcModel.Name = token
-    
+    local npcClass = GetNewNPCClass(class)
+
     -- set up NPC appearance
     local h: HumanoidDescription = Instance.new("HumanoidDescription", npcModel.Humanoid) :: HumanoidDescription
     h.Face = NPCAppearance:GetAsset("Face")
-    
-    h.FrontAccessory = table.unpack(NPCAppearance:GetAsset("FrontAccessories") :: table)
-    h.FaceAccessory = table.unpack(NPCAppearance:GetAsset("FaceAccessories") :: table)
-    h.HairAccessory = NPCAppearance:GetAsset("Hair")
 
     local bodyColor = NPCAppearance:GetAsset("BodyColor") :: Color3
     h.HeadColor = bodyColor
@@ -41,9 +47,15 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
     h.RightLegColor = bodyColor
     h.TorsoColor = bodyColor
 
-    h.Shirt = NPCAppearance:GetAsset("Shirt") :: number
-    h.Pants = NPCAppearance:GetAsset("Pants") :: number
+	h.HairAccessory = NPCAppearance:GetAsset("Hair")
+    h.Shirt = NPCAppearance:GetAsset("Shirt", npcClass, true) :: number
+    h.Pants = NPCAppearance:GetAsset("Pants", npcClass, true) :: number
     
+	local faceAccessory = NPCAppearance:GetAsset("FaceAccessory", npcClass, true)
+	local frontAccessory = NPCAppearance:GetAsset("FrontAccessory", npcClass, true)
+	
+	h.FaceAccessory = if faceAccessory then convertToString(faceAccessory) else ""
+	h.FrontAccessory = if frontAccessory then convertToString(frontAccessory) else ""
 
     npcModel.Humanoid:ApplyDescriptionReset(h, Enum.AssetTypeVerification.Default)
     npcModel.HumanoidRootPart:SetNetworkOwner(nil)
@@ -55,7 +67,7 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
 
     -- set up NPC pre-determined attributes
     npcModel:SetAttribute("Tag", token)
-    npcModel:SetAttribute("Class", GetNewNPCClass(class))
+    npcModel:SetAttribute("Class", npcClass)
 
     return npcModel
 end
