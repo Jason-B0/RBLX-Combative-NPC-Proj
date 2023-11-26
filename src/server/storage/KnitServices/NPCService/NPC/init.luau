@@ -340,7 +340,10 @@ function NPC:Active()
                 resolve()
             end
             
-            promises.innerMovePromise = Move(self, waypoint)
+            promises.innerMovePromise = Move(self, waypoint):catch(function()
+                task.wait(4)
+                computePath()
+            end)
             
             -- if cancelled, cancel promises.innerMovePromise
             if onCancel(function()
@@ -351,6 +354,7 @@ function NPC:Active()
             
             -- catch path rejections
             promises.innerMovePromise:catch(function()
+                task.wait(4)
                 computePath()
             end)
             

@@ -57,6 +57,16 @@ return function(self, destination: Types.Waypoint | BasePart)
             -- Detect when movement to next waypoint is complete
             if not reachedConnection then
                 reachedConnection = humanoid.MoveToFinished:Connect(function(reached)
+                    task.spawn(function()
+                        local thisWPIndex = nextWaypointIndex 
+                        task.wait(5)
+                        if thisWPIndex == nextWaypointIndex then
+                            warn("Waypoint timed out, recompute.")
+                            reachedConnection:Disconnect()
+                            blockedConnection:Disconnect()
+                            reject()
+                        end
+                    end)
                     if reached and nextWaypointIndex < #waypoints then
                         -- Increase waypoint index and move to next waypoint
                         nextWaypointIndex += 1

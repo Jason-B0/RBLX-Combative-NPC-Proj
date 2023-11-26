@@ -14,7 +14,7 @@ local ClientNPCController = Knit.CreateController({
     IGNORED_TEAM_COLOR = BrickColor.new("Maroon"),
     NPCs = {},
     
-    REGIONS = {},
+    REGIONS = {} :: Region,
     
     npcsInFOV = {},
 })
@@ -22,6 +22,11 @@ local ClientNPCController = Knit.CreateController({
 local LocalPlayer = Players.LocalPlayer
 local Character
 
+type Region = {
+    name: string,
+    restriction: string,
+    region: Region3,
+}
 --============ CONFIG =====================
 local PLAYER_ATTRIBUTES = {
     
@@ -60,10 +65,10 @@ function ClientNPCController:Render()
         end
         
         --===== UPDATE LOCATION =====
-        for regionName, regionBounds: Region3 in (self.REGIONS) do
-            local partsInRegion = workspace:GetPartBoundsInBox(regionBounds.CFrame, regionBounds.Size, overlapParams)
+        for _, region: Region in (self.REGIONS) do
+            local partsInRegion = workspace:GetPartBoundsInBox(region.region.CFrame, region.region.Size, overlapParams)
             if #partsInRegion > 0 then
-                if LocalPlayer:GetAttribute("disguisedForRegion") ~= regionName then
+                if LocalPlayer:GetAttribute("disguisedForRegion") ~= region.restriction then
                     locationState:set("Trespassing")
                     break
                 else
@@ -74,6 +79,19 @@ function ClientNPCController:Render()
             end
         end
         
+        --=== IF THEY ARE NEAR A DEAD BODY ====
+        for _, npcModel in pairs(self.NPCs) do
+            local npcHumanoid = npcModel:FindFirstChildOfClass("Humanoid")
+            local npcInFOV = npcIsInDetectionRange(npcModel, true)
+            
+            if npcInFOV == true and npcHumanoid.Health <= 0 then
+                operationState:set("Compromised")
+                break
+            else
+                operationState:set("Safe")
+            end
+        end
+        
         --=== UPDATE AGGRO STATE ===
         local goalAggroState = determineNPCAggroState()
             
@@ -81,7 +99,7 @@ function ClientNPCController:Render()
             for _, npcModel in pairs(self.NPCs) do
             
                 local npcTag = npcModel:GetAttribute("Tag")
-                local npcInFOV = npcIsInDetectionRange(npcModel)
+                local npcInFOV = npcIsInDetectionRange(npcModel, true)
                 
                 -- if NPC is in FOV and not already in the table, add it to the table
                 if npcInFOV == true then
