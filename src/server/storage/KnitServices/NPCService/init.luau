@@ -64,11 +64,12 @@ function NPCService:KillNPC(npcTag: string)
 end
 
 -- NPC creation
-function NPCService:CreateNewNPC(class: string?)
+function NPCService:CreateNewNPC(class: string?, position: Vector3?)
     local newNPCModel = Asset.NPC:Clone()
     newNPCModel.Parent = self.NPC_FOLDER
     local newNPCObj = NPCObject.new(newNPCModel, class)
-    newNPCObj:Active()
+    newNPCObj:Active(position)
+    
     return newNPCObj
 end
 

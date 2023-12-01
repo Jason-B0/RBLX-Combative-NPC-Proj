@@ -201,7 +201,7 @@ function NPC.new(npcModel: Types.NPCModel, class: string?)
 end
 
 
-function NPC:Active()
+function NPC:Active(initPosition: Vector3?)
     local promises = {
         statePromise = nil :: Promise | nil,
         movePromise = nil :: Promise | nil,
@@ -428,7 +428,7 @@ function NPC:Active()
     -- initialize move
     task.spawn(function()
         local nextWaypointToken = determineNextWaypoint(self.NPCModel, nil, self.NPCModel:GetAttribute("compromised"))
-        self.NPCModel:PivotTo(findWaypointGivenToken(nextWaypointToken):GetPivot())
+        self.NPCModel:PivotTo(initPosition ~= nil and initPosition or findWaypointGivenToken(nextWaypointToken):GetPivot())
         task.wait(0.5)
         nextWaypointToken = determineNextWaypoint(self.NPCModel, nil, self.NPCModel:GetAttribute("compromised"))
         self.NPCModel:SetAttribute("NextWaypointToken", nextWaypointToken)
