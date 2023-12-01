@@ -75,7 +75,7 @@ AIAppearance.Storage = {
     },
     
     ["FrontAccessory"] = {
-        ["Dock Worker"] ={
+        ["DockWorker"] ={
             {13657318274},
             {13657304553},
             {13657298544},
@@ -121,14 +121,14 @@ AIAppearance.Storage = {
             12370539705,
         },
         
-        ["Dock Worker"] = {
+        ["DockWorker"] = {
             8437673433,
             8437746013,
             8437573828,
             8437663073,    
         },
         
-        ["Dock Admin"] = {
+        ["DockAdmin"] = {
             8437673433,
             8437746013,
             8437573828,
@@ -172,14 +172,14 @@ AIAppearance.Storage = {
             8625324601,
         },
         
-        ["Dock Worker"] = {
+        ["DockWorker"] = {
             3010962268,
             2663537304,
             4531198195,
             909108396,
         },
         
-        ["Dock Admin"] = {
+        ["DockAdmin"] = {
             3010962268,
             2663537304,
             4531198195,

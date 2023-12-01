@@ -24,36 +24,57 @@ local NPCControlService = Knit.CreateService({
 		["Civilian"] = 3,
 		["Police"] = 3,
 		["Cartel"] = 3,
-		["Dock Worker"] = 3,
-		["Dock Admin"] =  0,
+		["DockWorker"] = 3,
+		["DockAdmin"] =  0,
 	},
 	
 	Config = {
 		["Civilian"] = 25,
 		["Police"] = 10,
 		["Cartel"] = 15,
-		["Dock Worker"] = 30,
-		["Dock Admin"] = 0,
-	}
+		["DockWorker"] = 30,
+		["DockAdmin"] = 0,
+	},
+	
+	NPCEvents = {}
 })
 local NPCService
 --=================================
 local function spawnNPC(npcType: string)
 	assert(NPCControlService.Config[npcType], "Invalid NPC type: "..npcType)
     task.spawn(function()
-        for _ = 1, if not RunService:IsStudio() then NPCControlService.Config[npcType] else NPCControlService.Config_Test[npcType] do
+        for _ = 1,  if not RunService:IsStudio() then 
+									NPCControlService.Config[npcType] 
+								else 
+									NPCControlService.Config_Test[npcType] 
+		do
             NPCService:CreateNewNPC(npcType)
             task.wait(0.1)
         end
     end)
 end
 
+--=================================
+
+--[[
+	This function creates all the NPCEvents and store them in the TASKS table.	
+]]
+function NPCControlService:CreateNPCEvents()
+	
+end
+
+--[[
+	This function assigns NPCs to it.
+]]
+function NPCControlService:AssignNPCtoNPCEvent()
+	
+end
+
+
 function NPCControlService:Start()
-	spawnNPC("Civilian")
-	spawnNPC("Police")
-	spawnNPC("Cartel")
-	spawnNPC("Dock Worker")
-	spawnNPC("Dock Admin")
+	for i, v in pairs(NPCControlService.Config) do
+		spawnNPC(i)
+	end
 end
 
 --=================================

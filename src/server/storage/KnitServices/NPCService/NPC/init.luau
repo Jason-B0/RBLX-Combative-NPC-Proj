@@ -1,4 +1,4 @@
---!strict
+--!nonstrict
 local CollectionService = game:GetService("CollectionService")
 local PathfindingService = game:GetService("PathfindingService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,8 +13,8 @@ local Types = require(ReplicatedStorage.Shared.Types)
 local TAG_NAME = "NPC"
 
 local WAYPOINT_FOLDER = workspace.NPC_Waypoints :: Folder
-local TRACKING_FOLDER = WAYPOINT_FOLDER.TrackingFolder :: Folder
-local EVADE_FOLDER = WAYPOINT_FOLDER.EvadeWaypoints :: Folder
+local TRACKING_FOLDER = WAYPOINT_FOLDER:FindFirstChild("TrackingFolder") :: Folder
+local EVADE_FOLDER = WAYPOINT_FOLDER:FindFirstChild("EvadeWaypoints") :: Folder
 
 local TokenService, NPCService
 task.spawn(function() -- Knit initialization
@@ -75,7 +75,7 @@ local function determineNextWaypoint(npc: Types.NPCModel, targetPart: BasePart?,
         if npcClass == "Civilian" and (
             possibleWaypoint:GetAttribute("CanPublicAccess") == true 
         ) then
-            waypoint = possibleWaypoint
+            waypoint = possibleWaypoint :: Types.Waypoint
         
         elseif npcClass == "Police" and (
             possibleWaypoint:GetAttribute("CanPoliceAccess") == true or
@@ -85,33 +85,33 @@ local function determineNextWaypoint(npc: Types.NPCModel, targetPart: BasePart?,
             possibleWaypoint:GetAttribute("CanCartelAccess") == true or
             possibleWaypoint:GetAttribute("CanConstructionWorkerAccess") == true
         ) then
-            waypoint = possibleWaypoint
+            waypoint = possibleWaypoint :: Types.Waypoint
         
-        elseif npcClass == "Dock Worker" and (
+        elseif npcClass == "DockWorker" and (
             possibleWaypoint:GetAttribute("CanDockWorkerAccess") == true or
             possibleWaypoint:GetAttribute("CanPublicAccess") == true
         ) then
-            waypoint = possibleWaypoint
+            waypoint = possibleWaypoint :: Types.Waypoint
             
-        elseif npcClass == "Dock Admin" and (
+        elseif npcClass == "DockAdmin" and (
             possibleWaypoint:GetAttribute("CanDockAdminAccess") == true or
             possibleWaypoint:GetAttribute("CanDockWorkerAccess") == true or
             possibleWaypoint:GetAttribute("CanPublicAccess") == true
         ) then
-            waypoint = possibleWaypoint
+            waypoint = possibleWaypoint :: Types.Waypoint
             
         elseif npcClass == "Cartel" and (
             possibleWaypoint:GetAttribute("CanCartelAccess") == true or
             possibleWaypoint:GetAttribute("CanDockWorkerAccess") == true or
             possibleWaypoint:GetAttribute("CanPublicAccess") == true
         ) then
-            waypoint = possibleWaypoint
+            waypoint = possibleWaypoint :: Types.Waypoint
             
-        elseif npcClass == "Construction Worker" and (
+        elseif npcClass == "ConstructionWorker" and (
             possibleWaypoint:GetAttribute("CanConstructionWorkerAccess") == true or
             possibleWaypoint:GetAttribute("CanPublicAccess") == true
         ) then
-            waypoint = possibleWaypoint
+            waypoint = possibleWaypoint :: Types.Waypoint
             
         end
         
@@ -123,11 +123,12 @@ end
 
 -- find waypoint given token
 local function findWaypointGivenToken(waypointToken:string)
-    for _, waypoint: Types.Waypoint in pairs(WAYPOINT_FOLDER:GetDescendants()) do
+    for _, waypoint in pairs(WAYPOINT_FOLDER:GetDescendants()) do
         if waypoint:GetAttribute("WaypointToken") == waypointToken then
-            return waypoint
+            return waypoint :: Types.Waypoint
         end
     end
+    return nil :: Types.Waypoint
 end
 
 local function disconnectAllPromises(prom: {[any]: Promise})
@@ -149,7 +150,7 @@ local function disconnectAllConnections(conn: {[any]: RBXScriptConnection})
 end
 
 local function ragdollOnDeath(npcModel: Types.NPCModel)
-    for _, joint: Motor6D in pairs(npcModel:GetDescendants()) do
+    for _, joint in pairs(npcModel:GetDescendants()) do
 		if joint:IsA("Motor6D") then
 			local socket = Instance.new("BallSocketConstraint")
 			local a1 = Instance.new("Attachment")
@@ -180,7 +181,7 @@ function NPC.new(npcModel: Types.NPCModel, class: string?)
     newNPC.NPCModel = nil :: Types.NPCModel
     newNPC.NPCType = "" :: string
     newNPC.ThisNPCFinishedMoving = Signal.new()
-    newNPC.PlayerCurrentlyBeingTracked = nil :: Player
+    newNPC.PlayerCurrentlyBeingTracked = nil :: Player | nil
 	
     -- set up NPC model
 	newNPC.NPCModel = SetupModel(npcModel, TokenService:GenerateToken("npc"), class) :: Types.NPCModel
@@ -202,26 +203,27 @@ end
 
 function NPC:Active()
     local promises = {
-        statePromise = nil :: Promise,
-        movePromise = nil :: Promise,
-        innerMovePromise = nil :: Promise,
-        innerLookPromise = nil :: Promise,
-        combatPromise = nil :: Promise,
+        statePromise = nil :: Promise | nil,
+        movePromise = nil :: Promise | nil,
+        lookPromise = nil :: Promise | nil,
+        innerMovePromise = nil :: Promise | nil,
+        innerLookPromise = nil :: Promise | nil,
+        combatPromise = nil :: Promise | nil,
     }
     
     local connections = {
-        stateChangeConnection = nil :: RBXScriptConnection,
-        waypointChangeConnection = nil :: RBXScriptConnection,
-        lookAtChangeConnection = nil :: RBXScriptConnection,
-        combatConnection = nil :: RBXScriptConnection,
+        stateChangeConnection = nil :: RBXScriptConnection | nil,
+        waypointChangeConnection = nil :: RBXScriptConnection | nil,
+        lookAtChangeConnection = nil :: RBXScriptConnection | nil,
+        combatConnection = nil :: RBXScriptConnection | nil
     }
     -- listen for NPC's state changing signal
     -- every other mechanism depends on this
     connections.stateChangeConnection = self.NPCModel:GetAttributeChangedSignal("State"):Connect(function()
         
         local npcModel = self.NPCModel
-        local npcClass = npcModel:GetAttribute("Class") :: "Civilian" | "Police" | "Dock Worker" | "Dock Admin" | "Cartel"
-        local playerToTrack = if npcModel:GetAttribute("playerToTrack") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("playerToTrack")) else nil :: Player
+        local npcClass = npcModel:GetAttribute("Class") :: "Civilian" | "Police" | "DockWorker" | "DockAdmin" | "Cartel"
+        local playerToTrack = if npcModel:GetAttribute("playerToTrack") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("playerToTrack")) else nil :: Player | nil
         local charToTrack = if playerToTrack then playerToTrack.Character else nil :: Types.Character
         local newState = npcModel:GetAttribute("State")
 
@@ -234,7 +236,9 @@ function NPC:Active()
         promises.statePromise = Promise.new(function(resolve, reject, onCancel)
             
             if onCancel(function()
-                promises.statePromise:cancel()
+                if promises.statePromise then
+                    promises.statePromise:cancel()
+                end
             end) then
                 return
             end

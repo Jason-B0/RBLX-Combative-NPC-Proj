@@ -1,4 +1,18 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Promise = require(ReplicatedStorage.Packages.Promise)
+local Signal = require(ReplicatedStorage.Packages.Signal)
+type Promise = typeof(Promise.new(function() end))
+type Signal<T> = typeof(Signal.new())
 local types = {}
+
+export type NPCEvent = {
+    name: string;
+    evtType: "Dialogue" | "RecursiveTask" | "InfinitiveTask" | "OneTimeTask";
+    restriction: {string}?;
+    counter: number;
+    connections: {[number]: RBXScriptConnection};
+    promises: {[any]: Promise};    
+}
 
 export type NPCModel = Model & {
     HumanoidRootPart: BasePart,
@@ -45,7 +59,7 @@ export type WeaponTool = Tool & {
 export type NPC = {
     NPCModel: NPCModel,   
     NPCType: string,
-    ThisNPCFinishedMoving: Signal<T...>,
+    ThisNPCFinishedMoving: Signal<any>;
     PlayerCurrentlyBeingTracked: Player,
 }
 
