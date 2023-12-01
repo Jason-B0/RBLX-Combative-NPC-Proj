@@ -21,7 +21,7 @@ local NPC_DEFAULT_ATTRIBUTES = {
 local GetNewNPCClass = require(Helper.GetNewNPCClass)
 local NPCAppearance = require(Assets.NPCAppearance)
 
-local function convertToString(accessories: table): string
+local function convertToString(accessories: {}): string
 	assert(type(accessories) == "table", "accessories must be a table")
     local allAccessories = ""
     for _, accessoryId: string in pairs(accessories) do
@@ -37,9 +37,9 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
 
     -- set up NPC appearance
     local h: HumanoidDescription = Instance.new("HumanoidDescription", npcModel.Humanoid) :: HumanoidDescription
-    h.Face = NPCAppearance:GetAsset("Face")
+    h.Face = NPCAppearance:GetAsset("Face", nil, false) :: number
 
-    local bodyColor = NPCAppearance:GetAsset("BodyColor") :: Color3
+    local bodyColor = NPCAppearance:GetAsset("BodyColor", nil, false) :: Color3
     h.HeadColor = bodyColor
     h.LeftArmColor = bodyColor
     h.RightArmColor = bodyColor
@@ -47,13 +47,14 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
     h.RightLegColor = bodyColor
     h.TorsoColor = bodyColor
 
-	h.HairAccessory = NPCAppearance:GetAsset("Hair")
     h.Shirt = NPCAppearance:GetAsset("Shirt", npcClass, true) :: number
     h.Pants = NPCAppearance:GetAsset("Pants", npcClass, true) :: number
     
-	local faceAccessory = NPCAppearance:GetAsset("FaceAccessory", npcClass, true)
-	local frontAccessory = NPCAppearance:GetAsset("FrontAccessory", npcClass, true)
-	
+	local hairAccessory = NPCAppearance:GetAsset("HairAccessory", npcClass, false) :: {}
+	local faceAccessory = NPCAppearance:GetAsset("FaceAccessory", npcClass, true) :: {}
+	local frontAccessory = NPCAppearance:GetAsset("FrontAccessory", npcClass, true) :: {}
+
+    h.HairAccessory = convertToString(hairAccessory)
 	h.FaceAccessory = if faceAccessory then convertToString(faceAccessory) else ""
 	h.FrontAccessory = if frontAccessory then convertToString(frontAccessory) else ""
 

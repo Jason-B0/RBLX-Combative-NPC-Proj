@@ -24,10 +24,11 @@ local PATHFINDING_PARAM = {
 return function(self, destination: Types.Waypoint | BasePart)
         local path = PathfindingService:CreatePath(PATHFINDING_PARAM)
         local humanoid = self.NPCModel:FindFirstChildOfClass("Humanoid")
+        local destParent = destination.Parent :: Instance
         local waypoints
         local nextWaypointIndex
-        local reachedConnection: RBXScriptConnection
-        local blockedConnection: RBXScriptConnection
+        local reachedConnection = nil :: RBXScriptConnection  | nil
+        local blockedConnection = nil :: RBXScriptConnection  | nil
 		
 		-- Promise allowing NPC to move to destination
         return Promise.new(function(resolve, reject, onCancel)
@@ -46,8 +47,12 @@ return function(self, destination: Types.Waypoint | BasePart)
                 -- Check if the obstacle is further down the path
                 if blockedWaypointIndex >= nextWaypointIndex then
                     -- Stop detecting path blockage until path is re-computed
-                    reachedConnection:Disconnect()
-                    blockedConnection:Disconnect()
+                    if blockedConnection ~= nil then
+                        blockedConnection:Disconnect()
+                    end
+                    if reachedConnection ~= nil then
+                        reachedConnection:Disconnect()
+                    end
                     -- Call function to re-compute new path
                     warn("Waypoint blocked, recompute.")
                     reject()
@@ -55,29 +60,47 @@ return function(self, destination: Types.Waypoint | BasePart)
             end)
 
             -- Detect when movement to next waypoint is complete
-            if not reachedConnection then
+            if reachedConnection ~= nil then
                 reachedConnection = humanoid.MoveToFinished:Connect(function(reached)
+                    task.spawn(function()
+                        local thisWPIndex = nextWaypointIndex 
+                        task.wait(5)
+                        if thisWPIndex == nextWaypointIndex then
+                            warn("Waypoint timed out, recompute.")
+                            reachedConnection:Disconnect()
+                            if blockedConnection ~= nil then
+                                blockedConnection:Disconnect()
+                            end
+                            reject()
+                        end
+                    end)
                     if reached and nextWaypointIndex < #waypoints then
                         -- Increase waypoint index and move to next waypoint
                         nextWaypointIndex += 1
                         humanoid:MoveTo(waypoints[nextWaypointIndex].Position)
                     else
-                        if destination.Parent.Name == "TrackingFolder" then
+                        if destParent.Name == "TrackingFolder" then
                             destination:Destroy()
                         end
                         reachedConnection:Disconnect()
-                        blockedConnection:Disconnect()
+                        if blockedConnection ~= nil then
+                            blockedConnection:Disconnect()
+                        end
                         resolve("Reached destination")
                     end
                 end)
             end
 
 			onCancel(function()
-                if destination.Parent.Name == "TrackingFolder" then
+                if destParent.Name == "TrackingFolder" then
                     destination:Destroy()
                 end
-                reachedConnection:Disconnect()
-                blockedConnection:Disconnect()
+                if reachedConnection ~= nil then
+                    reachedConnection:Disconnect()
+                end
+                if blockedConnection ~= nil then
+                    blockedConnection:Disconnect()
+                end
 			end)
 			
             -- Initially move to second waypoint (first waypoint is path start; skip it)
