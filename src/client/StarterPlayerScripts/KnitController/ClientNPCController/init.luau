@@ -56,7 +56,7 @@ function ClientNPCController:Render()
         -- Ignore if player is on the ignored team color
         if LocalPlayer.TeamColor == ClientNPCController.IGNORED_TEAM_COLOR then
             
-            if not operationState:get() == "Safe" or not locationState:get() == "Safe" then
+            if operationState:get() ~= "Safe" or locationState:get() ~= "Safe" then
                 locationState:set("Safe")
                 operationState:set("Safe")
             end

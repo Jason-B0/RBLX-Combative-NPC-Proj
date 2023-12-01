@@ -72,6 +72,14 @@ function NPCService:CreateNewNPC(class: string?)
     return newNPCObj
 end
 
+-- Returns a copy of NPC list
+function NPCService:GetNPCList()
+    local npcList = {}
+    for _, npc: Types.NPCModel in pairs(self.NPCs) do
+        table.insert(npcList, npc)
+    end
+    return npcList
+end
 --=================================
 function NPCService:KnitStart()
     NPCService = Knit.GetService("NPCService")

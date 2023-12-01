@@ -7,13 +7,23 @@ local types = {}
 
 export type NPCEvent = {
     name: string;
+    token: string;
     evtType: "Dialogue" | "RecursiveTask" | "InfinitiveTask" | "OneTimeTask";
     restriction: {string}?;
     counter: number;
+    maxParticipants: number;
+    targetCount: number;
     connections: {[number]: RBXScriptConnection};
     promises: {[any]: Promise};    
 }
 
+export type NPC = {
+    NPCModel: NPCModel,
+    NPCType: string,
+    ThisNPCFinishedMoving: Signal<any>,
+    PlayerCurrentlyBeingTracked: Player,
+    CurrentTask: NPCEvent?,
+}
 export type NPCModel = Model & {
     HumanoidRootPart: BasePart,
     Humanoid: Humanoid & {
@@ -54,13 +64,6 @@ export type WeaponTool = Tool & {
 	},	
 	Animation: ModuleScript,
     Settings: ModuleScript,
-}
-
-export type NPC = {
-    NPCModel: NPCModel,   
-    NPCType: string,
-    ThisNPCFinishedMoving: Signal<any>;
-    PlayerCurrentlyBeingTracked: Player,
 }
 
 export type Waypoint = BasePart & {
