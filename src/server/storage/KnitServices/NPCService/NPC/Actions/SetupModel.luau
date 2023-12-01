@@ -50,7 +50,7 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
     h.Shirt = NPCAppearance:GetAsset("Shirt", npcClass, true) :: number
     h.Pants = NPCAppearance:GetAsset("Pants", npcClass, true) :: number
     
-	local hairAccessory = NPCAppearance:GetAsset("HairAccessory", npcClass, true) :: {}
+	local hairAccessory = NPCAppearance:GetAsset("HairAccessory", npcClass, false) :: {}
 	local faceAccessory = NPCAppearance:GetAsset("FaceAccessory", npcClass, true) :: {}
 	local frontAccessory = NPCAppearance:GetAsset("FrontAccessory", npcClass, true) :: {}
 

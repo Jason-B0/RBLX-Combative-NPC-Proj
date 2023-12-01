@@ -43,7 +43,7 @@ AIAppearance.Storage = {
 
     },
 
-    ["Hair"] = {
+    ["HairAccessory"] = {
         {0},
         {4794176862},
         {4482868732},

@@ -21,10 +21,10 @@ local NPCControlService = Knit.CreateService({
 		isMoveEnabled = false,
 		isAttackEnabled = false,
 		
-		["Civilian"] = 50,
-		["Police"] = 50,
-		["Cartel"] = 50,
-		["Dock Worker"] = 50,
+		["Civilian"] = 3,
+		["Police"] = 3,
+		["Cartel"] = 3,
+		["Dock Worker"] = 3,
 		["Dock Admin"] =  0,
 	},
 	

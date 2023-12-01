@@ -1,4 +1,4 @@
---!strict
+--!nonstrict
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
@@ -17,8 +17,14 @@ local Hitmarker = require(Modules.Hitmarker)
 
 --===============================================
 local function CheckForHumanoid(instance: Instance)
-	local humanoid = instance.Parent:FindFirstChildOfClass("Humanoid") or
-		instance.Parent.Parent:FindFirstChildOfClass("Humanoid")
+	local humanoid = 
+		if instance.Parent ~= nil then 
+			instance.Parent:FindFirstChildOfClass("Humanoid") 
+		elseif instance.Parent ~= nil and instance.Parent.Parent ~= nil then
+			instance.Parent.Parent:FindFirstChildOfClass("Humanoid")
+		else
+			nil
+		
 	if humanoid then
 		return true, humanoid
 	end
@@ -106,7 +112,7 @@ return function(self: Types.NPC, player: Player)
 				local raycastResult = workspace:Raycast(npcHrp.Position, direction * distance, raycastParams)
 				
 				if raycastResult then
-					-- turn their entire body to player
+					-- TODO turn their entire body to player
 					local targetCFrame = lookAt(plrCharacter.PrimaryPart.Position, npcHrp.Position)
 					
 					-- FX
