@@ -44,26 +44,27 @@ AIAppearance.Storage = {
     },
 
     ["Hair"] = {
-        4794176862,
-        4482868732,
-        7392437107,
-        10006185533,
-        9243987340,
-        9174354743,
-        5131996138,
-        13345071056,
-        13458529673,
-        7193452166,
-        13811953990,
-        8966711821,
-        5890690147,
-        10006672210,
-        14129173878,
-        11509883024,
-        7067610701,
-        5131996138,
-        4773873546,
-        7456246321,
+        {0},
+        {4794176862},
+        {4482868732},
+        {7392437107},
+        {10006185533},
+        {9243987340},
+        {9174354743},
+        {5131996138},
+        {13345071056},
+        {13458529673},
+        {7193452166},
+        {13811953990},
+        {8966711821},
+        {5890690147},
+        {10006672210},
+        {14129173878},
+        {11509883024},
+        {7067610701},
+        {5131996138},
+        {4773873546},
+        {7456246321},
     },
 
     ["BodyColor"] = {
@@ -199,7 +200,7 @@ AIAppearance.Storage = {
     },
 }
 
-function AIAppearance:GetAsset(accessory: string, npcClass: string?, accessoryIsClassDependent: boolean): table | Color3 | number
+function AIAppearance:GetAsset(accessory: string, npcClass: string?, accessoryIsClassDependent: boolean): {} | number | Color3
     local result = nil
     
     if npcClass ~= nil and accessoryIsClassDependent == true and self.Storage[accessory][npcClass] then

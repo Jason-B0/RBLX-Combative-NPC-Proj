@@ -10,13 +10,6 @@ local DETECTION_DISTANCE = {
 	BRIGHT_INDOOR = 70,
 	DARK_INDOOR = 10,
 }
-local INDICATOR_COLOR = {
-	["Safe"] = Color3.fromRGB(255, 255, 255),
-	["Curious"] = Color3.fromRGB(255, 255, 255),
-	["Suspicious"] = Color3.fromRGB(242, 255, 0),
-	["Investigating"] = Color3.fromRGB(255, 170, 0),
-	["Alerted"] = Color3.fromRGB(255, 0, 0),
-}
 
 return function(self, player: Player)
 	local npcHead = self.NPCModel.Head :: BasePart
