@@ -1,3 +1,4 @@
+--!strict
 --[[
 	This service strictly tracks the status of all NPCs, creating them and assigning them tags, and
 	assigning paths etc.
@@ -46,7 +47,7 @@ local NPCControlService = Knit.CreateService({
 })
 local NPCService
 --=================================
-local function spawnNPC(npcType: string, position: Vector3?)
+local function spawnNPC(npcType: string, position: CFrame?)
 	assert(NPCControlService.Config[npcType], "Invalid NPC type: "..npcType)
     task.spawn(function()
         for _ = 1,  if not RunService:IsStudio() then 
@@ -60,7 +61,7 @@ local function spawnNPC(npcType: string, position: Vector3?)
     end)
 end
 
-local function spawnSingleNPC(npcType: string, position: Vector3?)
+local function spawnSingleNPC(npcType: string, position: CFrame?)
     assert(NPCControlService.Config[npcType], "Invalid NPC type: " .. npcType)
     task.spawn(function()
         NPCService:CreateNewNPC(npcType, position)
@@ -117,7 +118,7 @@ function NPCControlService:AssignNPCtoNPCEvent()
 	
 end
 
-function NPCService.Client:CreateNewSingleNPC(
+function NPCControlService.Client:CreateNewSingleNPC(
     player: Player,
     class: string,
     position: Vector3
@@ -125,12 +126,16 @@ function NPCService.Client:CreateNewSingleNPC(
 	return self.Server:CreateNewNPCAdminAuth(player, class, position)
 end
 
-function NPCService:CreateNewNPCAdminAuth(player: Player, class: string, position: Vector3)
+function NPCControlService:CreateNewNPCAdminAuth(player: Player, class: string, position: CFrame)
     if player:GetRankInGroup(11023841) >= 5 then
 		spawnSingleNPC(class, position)
 		return true
 	end
 	return false
+end
+
+function NPCControlService:SpecialEvent()
+	local n1, n2, n3 = require(script.Events.Special1201)()
 end
 
 function NPCControlService:Start()

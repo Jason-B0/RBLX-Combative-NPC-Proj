@@ -201,7 +201,7 @@ function NPC.new(npcModel: Types.NPCModel, class: string?)
 end
 
 
-function NPC:Active(initPosition: Vector3?)
+function NPC:Active(initPosition: CFrame?)
     local promises = {
         statePromise = nil :: Promise | nil,
         movePromise = nil :: Promise | nil,

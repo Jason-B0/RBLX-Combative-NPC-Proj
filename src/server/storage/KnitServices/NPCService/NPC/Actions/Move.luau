@@ -60,7 +60,7 @@ return function(self, destination: Types.Waypoint | BasePart)
             end)
 
             -- Detect when movement to next waypoint is complete
-            if reachedConnection ~= nil then
+            if reachedConnection == nil then
                 reachedConnection = humanoid.MoveToFinished:Connect(function(reached)
                     task.spawn(function()
                         local thisWPIndex = nextWaypointIndex 
