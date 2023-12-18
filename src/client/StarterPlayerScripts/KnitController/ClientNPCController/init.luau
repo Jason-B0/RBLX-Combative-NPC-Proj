@@ -44,6 +44,9 @@ local locationState = require(Helper.LocationState)
 local operationState = require(Helper.OperationState)
 
 --==========================================
+function ClientNPCController:SetOperationState(state: string)
+    operationState:set(state)
+end
 
 function ClientNPCController:Render()
     local torso = Character:WaitForChild("Torso") :: BasePart
@@ -56,7 +59,7 @@ function ClientNPCController:Render()
         -- Ignore if player is on the ignored team color
         if LocalPlayer.TeamColor == ClientNPCController.IGNORED_TEAM_COLOR then
             
-            if not operationState:get() == "Safe" or not locationState:get() == "Safe" then
+            if operationState:get() ~= "Safe" or locationState:get() ~= "Safe" then
                 locationState:set("Safe")
                 operationState:set("Safe")
             end
@@ -177,18 +180,6 @@ function ClientNPCController:Render()
         end
     end)
     
-    -- proximity prompt
-    ProximityPromptService.PromptButtonHoldBegan:Connect(function(prompt, player)
-        if prompt.Name == "NPCPrompt" then
-            operationState:set("Illegal Action")
-        end
-    end)
-    
-    ProximityPromptService.PromptButtonHoldEnded:Connect(function(prompt, player)
-        if prompt.Name == "NPCPrompt" then
-            operationState:set("Safe")
-        end
-    end)
 end
 
 --==========================================
