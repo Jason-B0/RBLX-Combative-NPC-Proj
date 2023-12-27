@@ -30,6 +30,7 @@ local NPCService = Knit.CreateService({
     NPC_FOLDER = workspace.NPC,
     
     NPCs = {} :: {[string]: Types.NPCModel},
+    AggrovateSignal = Signal.new(),
     
 })
 local TokenService

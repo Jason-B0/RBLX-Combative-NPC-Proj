@@ -27,15 +27,7 @@ type Region = {
     restriction: string,
     region: Region3,
 }
---============ CONFIG =====================
-local PLAYER_ATTRIBUTES = {
-    
-    locationState = "Safe",
-    operationState = "Safe",
-    disguisedForRegion = "",
-    shotsFired = false,
-    
-}
+
 --============ HELPER =====================
 local Helper = script.Helper
 local determineNPCAggroState = require(Helper.DetermineNPCAggroState)
@@ -228,19 +220,7 @@ function ClientNPCController:KnitStart()
         assert(npcModel:FindFirstChildOfClass("Humanoid"), "NPC does not have a humanoid!")
         self.NPCs[npcModel:GetAttribute("Tag")] = npcModel
     end)
-    
-    -- wait for character to load, then set up player
-    LocalPlayer.CharacterAdded:Connect(function(character)
-        for i, v in pairs(PLAYER_ATTRIBUTES) do
-            LocalPlayer:SetAttribute(tostring(i), v)
-        end
-        ClientNPCController:Render()
-    end)
-    
-    -- on first start
-    for i, v in pairs(PLAYER_ATTRIBUTES) do
-        LocalPlayer:SetAttribute(tostring(i), v)
-    end
+        
     ClientNPCController:Render()
     
 end

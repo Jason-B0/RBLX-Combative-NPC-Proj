@@ -12,7 +12,7 @@ export type NPCEvent = {
     restriction: {string}?;
     counter: number;
     maxParticipants: number;
-    targetCount: number;
+ q   targetCount: number;
     connections: {[number]: RBXScriptConnection};
     promises: {[any]: Promise};    
 }
