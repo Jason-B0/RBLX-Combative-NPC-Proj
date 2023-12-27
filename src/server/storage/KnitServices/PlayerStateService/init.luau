@@ -17,7 +17,6 @@ local PLAYER_ATTRIBUTES = {
 local function setupAttributes(player: Player)
     for i, v in pairs(PLAYER_ATTRIBUTES) do
         player:SetAttribute(i, v)
-		print(player:GetAttribute(i))
     end
 end
 
