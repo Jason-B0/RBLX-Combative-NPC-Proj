@@ -114,7 +114,7 @@ local function determineNextWaypoint(npc: Types.NPCModel, targetPart: BasePart?,
             waypoint = possibleWaypoint :: Types.Waypoint
             
         end
-        
+        task.wait()
     end
     
     return waypoint:GetAttribute("WaypointToken") :: string

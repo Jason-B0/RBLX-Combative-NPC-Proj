@@ -6,18 +6,16 @@ local OperationState = {}
 local PlayerStateService
 
 task.spawn(function()
-    Knit.OnStart():await():andThen(function()
+    Knit.OnStart():andThen(function()
         PlayerStateService = Knit.GetService("PlayerStateService")
     end)
 end)
 
 function OperationState:set(newState: string?)
-    if not Knit.OnStart() then Knit.OnStart():await() end
-    
     if newState ~= nil then
-        PlayerStateService:UpdatePlayerState(LocalPlayer, "operationState", newState)
+        PlayerStateService:UpdatePlayerState("operationState", newState)
     else
-        PlayerStateService:UpdatePlayerState(LocalPlayer, "operationState", "Safe")
+        PlayerStateService:UpdatePlayerState("operationState", "Safe")
     end
 end
 

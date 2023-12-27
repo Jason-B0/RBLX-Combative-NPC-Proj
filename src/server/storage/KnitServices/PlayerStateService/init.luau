@@ -10,13 +10,14 @@ local PlayerStateService = Knit.CreateService({
 local PLAYER_ATTRIBUTES = {
     locationState = "Safe",
     operationState = "Safe",
-    disguisedForRegion = "",
+    disguisedForRegion = " ",
 }
 
 --============ HELPER =====================
 local function setupAttributes(player: Player)
     for i, v in pairs(PLAYER_ATTRIBUTES) do
         player:SetAttribute(i, v)
+		print(player:GetAttribute(i))
     end
 end
 
@@ -25,8 +26,11 @@ function PlayerStateService.Client:UpdatePlayerState(player: Player, key: string
 	return self.Server:UpdatePlayerState(player, key, value)
 end
 
-function PlayerStateService:UpdatePlayerState(player: Player, key, value)
-	player:SetAttribute(key, value)
+function PlayerStateService:UpdatePlayerState(player: Player, key: string, value: any)
+	local localPlayer = Players:GetPlayerByUserId(player.UserId)
+	if localPlayer then
+		localPlayer:SetAttribute(key, value)
+	end
 end
 
 function PlayerStateService:KnitInit() end
