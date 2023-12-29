@@ -135,7 +135,7 @@ function NPCControlService:CreateNewNPCAdminAuth(player: Player, class: string, 
 end
 
 function NPCControlService:SpecialEvent()
-	local n1, n2, n3 = require(script.Events.Special1201)()
+	return true
 end
 
 function NPCControlService:Start()
