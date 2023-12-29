@@ -20,6 +20,11 @@ local function setupAttributes(player: Player)
     end
 end
 
+for i, v in pairs(game:GetService("Players"):GetPlayers()) do
+	
+	v:SetAttribute("disguisedForRegion", "Dock")
+end
+
 --==========================================
 function PlayerStateService.Client:UpdatePlayerState(player: Player, key: string, value: any)
 	return self.Server:UpdatePlayerState(player, key, value)

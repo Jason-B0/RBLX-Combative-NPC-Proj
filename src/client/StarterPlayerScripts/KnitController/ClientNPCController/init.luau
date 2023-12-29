@@ -47,7 +47,6 @@ function ClientNPCController:Render()
     RunService:BindToRenderStep("Detection", Enum.RenderPriority.Camera.Value, function()
         -- Ignore if player is on the ignored team color
         if LocalPlayer.TeamColor == ClientNPCController.IGNORED_TEAM_COLOR then
-            print("somHOW WE ARE HERE")
             if operationState:get() ~= "Safe" or locationState:get() ~= "Safe" then
                 locationState:set("Safe")
                 operationState:set("Safe")
