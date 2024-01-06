@@ -37,6 +37,28 @@ local TokenService
 --=================================
 local Asset = ServerStorage.Asset
 
+-- Helper function to create an NPCAvoid part
+local function createNPCAvoidPart(size: Vector3)
+    local newPart = Instance.new("Part")
+    newPart.Name = "NPCAvoid"
+    newPart.Size = size + Vector3.new(2, 5, 2)
+    newPart.Locked = false
+    newPart.Anchored = true
+    newPart.CastShadow = false
+    newPart.TopSurface = Enum.SurfaceType.Smooth
+    newPart.BottomSurface = Enum.SurfaceType.Smooth
+    newPart.LeftSurface = Enum.SurfaceType.Smooth
+    newPart.RightSurface = Enum.SurfaceType.Smooth
+    newPart.FrontSurface = Enum.SurfaceType.Smooth
+    newPart.BackSurface = Enum.SurfaceType.Smooth
+    newPart.CanCollide = false
+    newPart.Color = Color3.fromRGB(225, 225, 0)
+    newPart.Transparency = RunService:IsStudio() and 0.8 or 1
+    newPart.Parent = workspace.GAME_WORKSPACE.NPCAvoid:FindFirstChildOfClass("Folder")
+
+    return newPart
+end
+
 --=================================
 
 -- NPC aggrovation
@@ -124,22 +146,7 @@ function NPCService:KnitInit()
             
             if size == nil then continue end
             
-            local newPart = Instance.new("Part")
-            newPart.Name = "NPCAvoid"
-            newPart.Size = size + Vector3.new(2,5,2)
-            newPart.Locked = true
-            newPart.Anchored = true
-            newPart.CastShadow = false
-            newPart.TopSurface = Enum.SurfaceType.Smooth
-            newPart.BottomSurface = Enum.SurfaceType.Smooth
-            newPart.LeftSurface = Enum.SurfaceType.Smooth
-            newPart.RightSurface = Enum.SurfaceType.Smooth
-            newPart.FrontSurface = Enum.SurfaceType.Smooth
-            newPart.BackSurface = Enum.SurfaceType.Smooth
-            newPart.CanCollide = false
-            newPart.Color = Color3.fromRGB(225,225,0)
-            newPart.Transparency = if RunService:IsStudio() then .8 else 1
-            newPart.Parent = workspace.GAME_WORKSPACE.NPCAvoid:FindFirstChildOfClass("Folder")
+            local newPart = createNPCAvoidPart(size)
             newPart:PivotTo(v:GetPivot())
             
             local pathfindingModifier = Instance.new("PathfindingModifier")

@@ -47,24 +47,24 @@ local NPCControlService = Knit.CreateService({
 })
 local NPCService
 --=================================
-local function spawnNPC(npcType: string, position: CFrame?)
-	assert(NPCControlService.Config[npcType], "Invalid NPC type: "..npcType)
+local function spawnNPC(npcClass: string, position: CFrame?)
+	assert(NPCControlService.Config[npcClass], "Invalid NPC type: "..npcClass)
     task.spawn(function()
         for _ = 1,  if not RunService:IsStudio() then 
-									NPCControlService.Config[npcType] 
+									NPCControlService.Config[npcClass] 
 								else 
-									NPCControlService.Config_Test[npcType] 
+									NPCControlService.Config_Test[npcClass] 
 		do
-            NPCService:CreateNewNPC(npcType, position)
+            NPCService:CreateNewNPC(npcClass, position)
             task.wait(0.1)
         end
     end)
 end
 
-local function spawnSingleNPC(npcType: string, position: CFrame?)
-    assert(NPCControlService.Config[npcType], "Invalid NPC type: " .. npcType)
+local function spawnSingleNPC(npcClass: string, position: CFrame?)
+    assert(NPCControlService.Config[npcClass], "Invalid NPC type: " .. npcClass)
     task.spawn(function()
-        NPCService:CreateNewNPC(npcType, position)
+        NPCService:CreateNewNPC(npcClass, position)
     end)
 end
 
@@ -91,7 +91,7 @@ function NPCControlService:AssignNPCtoNPCEvent()
 		
 		for _, npc in pairs(npcList) do
 			
-			if not v.restriction or table.find(v.restriction, npc.NPCType) then
+			if not v.restriction or table.find(v.restriction, npc.npcClass) then
 				
 				-- reject if NPC is already assigned to an event
 				if npc.CurrentTask then

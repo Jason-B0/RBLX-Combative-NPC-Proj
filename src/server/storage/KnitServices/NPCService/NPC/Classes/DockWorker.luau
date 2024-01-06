@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Types = require(ReplicatedStorage.Shared.Types)
-local NPC = require(script.Parent)
+local NPC = require(script.Parent.Parent)
 
 --=========== MODULE ================
 

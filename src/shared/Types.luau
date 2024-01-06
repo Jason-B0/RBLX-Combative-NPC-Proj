@@ -18,11 +18,13 @@ export type NPCEvent = {
 }
 
 export type NPC = {
-    NPCModel: NPCModel,
-    NPCType: string,
-    ThisNPCFinishedMoving: Signal<any>,
-    PlayerCurrentlyBeingTracked: Player,
-    CurrentTask: NPCEvent?,
+    npcModel: NPCModel,
+    npcClass: string,
+    thisNPCFinishedMoving: Signal<any>,
+    playerCurrentlyBeingTracked: Player,
+    currentTask: NPCEvent?,
+    promises: {[any]: Promise},
+    connections: {[any]: RBXScriptConnection},
 }
 export type NPCModel = Model & {
     HumanoidRootPart: BasePart,
