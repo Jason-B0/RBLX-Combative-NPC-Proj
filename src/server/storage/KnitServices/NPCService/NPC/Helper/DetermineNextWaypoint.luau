@@ -10,7 +10,9 @@ local WAYPOINT_FOLDER = workspace.NPC_Waypoints :: Folder
 local TRACKING_FOLDER = WAYPOINT_FOLDER:FindFirstChild("TrackingFolder") :: Folder
 local EVADE_FOLDER = WAYPOINT_FOLDER:FindFirstChild("EvadeWaypoints") :: Folder
 
-return function(npc: Types.NPCModel, targetPart: BasePart?, isEvading: boolean?): string
+-- Function that determines the next waypoint for an NPC to go to
+-- Returns the token of the waypoint.
+return function(npc: Types.NPCModel, targetPart: BasePart?, isEvading: boolean | nil): string
 
     local npcClass = npc:GetAttribute("Class") :: string
 

@@ -16,9 +16,10 @@ local WAYPOINT_FOLDER = workspace.NPC_Waypoints :: Folder
 local TRACKING_FOLDER = WAYPOINT_FOLDER:FindFirstChild("TrackingFolder") :: Folder
 local EVADE_FOLDER = WAYPOINT_FOLDER:FindFirstChild("EvadeWaypoints") :: Folder
 
-local TokenService = task.spawn(function()
+local TokenService
+task.spawn(function()
     Knit.OnStart():andThen(function()
-        return Knit.GetService("TokenService")
+        TokenService = Knit.GetService("TokenService")
     end)
 end)
 
@@ -72,7 +73,7 @@ local InitialProps = {
     promises = {} :: {[any]: Promise},
     
     connections = {} :: {[any]: RBXScriptConnection},
-} :: Types.NPC
+}
 
 function NPC.new(npcModel: Types.NPCModel, class: string?)
     Knit.OnStart():awaitStatus()
@@ -107,7 +108,7 @@ function NPC:Active(initPosition: CFrame?)
     
     -- initialize move
     task.defer(function()
-        local nextWaypointToken = determineNextWaypoint(self.NPCModel, nil, self.NPCModel:GetAttribute("compromised"))
+        local nextWaypointToken = determineNextWaypoint(self.NPCModel :: Types.NPCModel, nil, self.NPCModel:GetAttribute("compromised"))
         self.NPCModel:PivotTo(
             if initPosition ~= nil then 
                 initPosition 
@@ -115,7 +116,7 @@ function NPC:Active(initPosition: CFrame?)
                 findWaypointGivenToken(nextWaypointToken):GetPivot()
             )
         task.wait(0.5)
-        nextWaypointToken = determineNextWaypoint(self.NPCModel, nil, self.NPCModel:GetAttribute("compromised"))
+        nextWaypointToken = determineNextWaypoint(self.NPCModel :: Types.NPCModel, nil, self.NPCModel:GetAttribute("compromised"))
         self.NPCModel:SetAttribute("NextWaypointToken", nextWaypointToken)
     end)
     
@@ -123,7 +124,7 @@ end
 
 
 function NPC:ChangeState()
-    local npcModel = self.NPCModel
+    local npcModel = self.NPCModel :: Types.NPCModel
     local npcClass = npcModel:GetAttribute("Class") :: string
     local playerToTrack = if npcModel:GetAttribute("playerToTrack") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("playerToTrack")) else nil :: Player | nil
     local charToTrack = if playerToTrack then playerToTrack.Character else nil :: Types.Character
@@ -168,7 +169,7 @@ function NPC:ChangeState()
             if self.NPCModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
                 self.NPCModel:SetAttribute("playerToLookAt", playerToTrack.Name)
             end
-            nextWaypoint = determineNextWaypoint(self.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
+            nextWaypoint = determineNextWaypoint(self.NPCModel :: Types.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
             
         elseif newState == "Alert" then
             self.NPCModel:SetAttribute("compromised", true)
@@ -177,7 +178,7 @@ function NPC:ChangeState()
                 task.wait(1)
             end
             if npcClass == "Police" or npcClass == "Cartel" then
-                nextWaypoint = determineNextWaypoint(self.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
+                nextWaypoint = determineNextWaypoint(self.NPCModel :: Types.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
                 
                 if self.promises.combatPromise ~= nil and self.promises.combatPromise:getStatus() == "Started" then
                     self.promises.combatPromise:cancel()
@@ -192,7 +193,7 @@ function NPC:ChangeState()
                     end
                 end)
             else
-                nextWaypoint = determineNextWaypoint(self.NPCModel, nil, true)
+                nextWaypoint = determineNextWaypoint(self.NPCModel :: Types.NPCModel, nil, true)
                 
                 task.delay(5, function()
                     if self.NPCModel.Humanoid.Health > 0 then
@@ -213,14 +214,14 @@ function NPC:ChangeState()
                 task.wait(1)
             end
             if npcClass == "Police" or npcClass == "Cartel" then
-                nextWaypoint = determineNextWaypoint(self.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
+                nextWaypoint = determineNextWaypoint(self.NPCModel :: Types.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
                 
                 if self.promises.combatPromise ~= nil and self.promises.combatPromise:getStatus() ~= "Started" then
                     self.promises.combatPromise = Combat(self, playerToTrack)
                 end
 
             else
-                nextWaypoint = determineNextWaypoint(self.NPCModel, nil, true)
+                nextWaypoint = determineNextWaypoint(self.NPCModel :: Types.NPCModel, nil, true)
                 
             end
             
@@ -250,27 +251,28 @@ function NPC:Suspicious()
     if self.NPCModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
         self.NPCModel:SetAttribute("playerToLookAt", playerToTrack.Name)
     end
-    local charToTrack = playerToTrack.Character
-    local nextWaypoint = determineNextWaypoint(self.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
+    local charToTrack = playerToTrack.Character :: Types.Character
+    local nextWaypoint = determineNextWaypoint(self.NPCModel :: Types.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
     self.NPCModel:SetAttribute("NextWaypointToken", nextWaypoint)
 end
 
 function NPC:Alert()
-    self.NPCModel:SetAttribute("compromised", true)
+    local npcModel = self.NPCModel :: Types.NPCModel
+    npcModel:SetAttribute("compromised", true)
     
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
         self.promises.movePromise:cancel()
         task.wait(1)
     end
 
-    local nextWaypoint = determineNextWaypoint(self.NPCModel, nil, true)
+    local nextWaypoint = determineNextWaypoint(npcModel :: Types.NPCModel, nil, true)
 
     task.delay(5, function()
-        if self.NPCModel.Humanoid.Health > 0 then
+        if npcModel.Humanoid.Health > 0 then
             -- TODO: Signal: call 911
-            self.NPCModel:SetAttribute("playerToLookAt", nil)
-            self.NPCModel:SetAttribute("State", "Hostile")
-            self.NPCModel:SetAttribute("NextWaypointToken", nextWaypoint)
+            npcModel:SetAttribute("playerToLookAt", nil)
+            npcModel:SetAttribute("State", "Hostile")
+            npcModel:SetAttribute("NextWaypointToken", nextWaypoint)
             -- TODO: Signal: total compromised
         end
     end)
@@ -278,20 +280,22 @@ function NPC:Alert()
 end
 
 function NPC:Hostile()
-    self.NPCModel:SetAttribute("compromised", true)
+    local npcModel = self.NPCModel :: Types.NPCModel
+    npcModel:SetAttribute("compromised", true)
     
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
         self.promises.movePromise:cancel()
         task.wait(1)
     end
 
-    local nextWaypoint = determineNextWaypoint(self.NPCModel, nil, true)
-    self.NPCModel:SetAttribute("NextWaypointToken", nextWaypoint)
+    local nextWaypoint = determineNextWaypoint(npcModel :: Types.NPCModel, nil, true)
+    npcModel:SetAttribute("NextWaypointToken", nextWaypoint)
     
 end
 
 function NPC:ChangeWaypoint()
-    local waypoint = findWaypointGivenToken(self.NPCModel:GetAttribute("NextWaypointToken"))
+    local npcModel = self.NPCModel :: Types.NPCModel
+    local waypoint = findWaypointGivenToken(npcModel:GetAttribute("NextWaypointToken"))
 
     -- cancel any previous self.promises.movePromise
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() == "Started" then
@@ -300,15 +304,15 @@ function NPC:ChangeWaypoint()
 
     -- create new self.promises.movePromise
     self.promises.movePromise = Promise.new(function(resolve, reject, onCancel)
-
+        local isCompromised = npcModel:GetAttribute("compromised") :: boolean
         local function computePath()
             task.delay(math.random(1, 5), function()
                 local nextWaypoint = determineNextWaypoint(
-                    self.NPCModel,
+                    npcModel :: Types.NPCModel,
                     nil,
-                    self.NPCModel:GetAttribute("compromised")
+                    isCompromised
                 )
-                self.NPCModel:SetAttribute("NextWaypointToken", nextWaypoint)
+                npcModel:SetAttribute("NextWaypointToken", nextWaypoint)
             end)
             resolve()
         end
@@ -377,7 +381,7 @@ end
 function NPC:Destroy()
     UpdateIndicator(self, "Safe")
     disconnectAllPromises(self.promises)
-    CollectionService:RemoveTag(self.NPCModel, TAG_NAME)
+    CollectionService:RemoveTag(self.NPCModel :: Types.NPCModel, TAG_NAME)
     if not self.NPCModel:IsDescendantOf(workspace) then
         disconnectAllConnections(self.connections)
     end
