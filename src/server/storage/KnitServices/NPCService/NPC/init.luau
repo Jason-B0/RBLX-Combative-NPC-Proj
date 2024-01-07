@@ -13,8 +13,8 @@ local Types = require(ReplicatedStorage.Shared.Types)
 local TAG_NAME = "NPC"
 
 local WAYPOINT_FOLDER = workspace.NPC_Waypoints :: Folder
-local TRACKING_FOLDER = WAYPOINT_FOLDER.TrackingFolder :: Folder
-local EVADE_FOLDER = WAYPOINT_FOLDER.EvadeWaypoints :: Folder
+local TRACKING_FOLDER = WAYPOINT_FOLDER:FindFirstChild("TrackingFolder") :: Folder
+local EVADE_FOLDER = WAYPOINT_FOLDER:FindFirstChild("EvadeWaypoints") :: Folder
 
 local TokenService, NPCService
 task.spawn(function() -- Knit initialization
@@ -64,7 +64,7 @@ local function determineNextWaypoint(npc: Types.NPCModel, targetPart: BasePart?,
     local waypoint = nil :: Types.Waypoint
     
     while waypoint == nil do
-        local possibleWaypoint = waypoints[math.random(1, #waypoints)]
+        local possibleWaypoint = waypoints[math.random(1, #waypoints)] :: Types.Waypoint
         
         if not possibleWaypoint:IsA("BasePart")  then
             continue
@@ -122,15 +122,16 @@ local function determineNextWaypoint(npc: Types.NPCModel, targetPart: BasePart?,
 end
 
 -- find waypoint given token
-local function findWaypointGivenToken(waypointToken:string)
-    for _, waypoint: Types.Waypoint in pairs(WAYPOINT_FOLDER:GetDescendants()) do
+local function findWaypointGivenToken(waypointToken:string): Instance | nil
+    for _, waypoint in pairs(WAYPOINT_FOLDER:GetDescendants()) do
         if waypoint:GetAttribute("WaypointToken") == waypointToken then
             return waypoint
         end
     end
+    return nil
 end
 
-local function disconnectAllPromises(prom: {[any]: Promise})
+local function disconnectAllPromises(prom: {[any]: Promise | nil})
     for _, promise: Promise in pairs(prom) do
         if promise ~= nil and promise:getStatus() == "Started" then    
             promise:cancel()
@@ -139,7 +140,7 @@ local function disconnectAllPromises(prom: {[any]: Promise})
     end
 end
 
-local function disconnectAllConnections(conn: {[any]: RBXScriptConnection})
+local function disconnectAllConnections(conn: {[any]: RBXScriptConnection | nil})
     for _, connection: RBXScriptConnection | nil in pairs(conn) do
         if connection ~= nil then    
             connection:Disconnect()
@@ -149,7 +150,7 @@ local function disconnectAllConnections(conn: {[any]: RBXScriptConnection})
 end
 
 local function ragdollOnDeath(npcModel: Types.NPCModel)
-    for _, joint: Motor6D in pairs(npcModel:GetDescendants()) do
+    for _, joint in pairs(npcModel:GetDescendants()) do
 		if joint:IsA("Motor6D") then
 			local socket = Instance.new("BallSocketConstraint")
 			local a1 = Instance.new("Attachment")
@@ -180,7 +181,7 @@ function NPC.new(npcModel: Types.NPCModel, class: string?)
     newNPC.NPCModel = nil :: Types.NPCModel
     newNPC.NPCType = "" :: string
     newNPC.ThisNPCFinishedMoving = Signal.new()
-    newNPC.PlayerCurrentlyBeingTracked = nil :: Player
+    newNPC.PlayerCurrentlyBeingTracked = nil :: Player | nil
 	
     -- set up NPC model
 	newNPC.NPCModel = SetupModel(npcModel, TokenService:GenerateToken("npc"), class) :: Types.NPCModel
@@ -202,26 +203,29 @@ end
 
 function NPC:Active()
     local promises = {
-        statePromise = nil :: Promise,
-        movePromise = nil :: Promise,
-        innerMovePromise = nil :: Promise,
-        innerLookPromise = nil :: Promise,
-        combatPromise = nil :: Promise,
+        ["statePromise"] = nil :: Promise,
+        ["movePromise"] = nil :: Promise,
+        ["innerMovePromise"] = nil :: Promise,
+        ["innerLookPromise"] = nil :: Promise,
+        ["combatPromise"] = nil :: Promise,
+        ["lookPromise"] = nil :: Promise,
     }
     
     local connections = {
-        stateChangeConnection = nil :: RBXScriptConnection,
-        waypointChangeConnection = nil :: RBXScriptConnection,
-        lookAtChangeConnection = nil :: RBXScriptConnection,
-        combatConnection = nil :: RBXScriptConnection,
+        ["stateChangeConnection"] = nil :: RBXScriptConnection | nil,
+        ["waypointChangeConnection"] = nil :: RBXScriptConnection | nil,
+        ["lookAtChangeConnection"] = nil :: RBXScriptConnection | nil,
+        ["combatConnection"] = nil :: RBXScriptConnection | nil,
     }
+
+    local npcModel = self.NPCModel :: Types.NPCModel
+    
     -- listen for NPC's state changing signal
     -- every other mechanism depends on this
     connections.stateChangeConnection = self.NPCModel:GetAttributeChangedSignal("State"):Connect(function()
         
-        local npcModel = self.NPCModel
         local npcClass = npcModel:GetAttribute("Class") :: "Civilian" | "Police" | "Dock Worker" | "Dock Admin" | "Cartel"
-        local playerToTrack = if npcModel:GetAttribute("playerToTrack") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("playerToTrack")) else nil :: Player
+        local playerToTrack = if npcModel:GetAttribute("playerToTrack") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("playerToTrack")) else nil :: Player | nil
         local charToTrack = if playerToTrack then playerToTrack.Character else nil :: Types.Character
         local newState = npcModel:GetAttribute("State")
 
@@ -242,26 +246,26 @@ function NPC:Active()
             local nextWaypoint
             
             if newState == "Safe" then
-                self.NPCModel:SetAttribute("playerToTrack", nil)
-                self.NPCModel:SetAttribute("playerToLookAt", nil)
+                npcModel:SetAttribute("playerToTrack", nil)
+                npcModel:SetAttribute("playerToLookAt", nil)
                 
             elseif newState == "Curious" then
-                self.NPCModel:SetAttribute("playerToLookAt", playerToTrack.Name)
+                npcModel:SetAttribute("playerToLookAt", playerToTrack.Name)
                 
             elseif newState == "Suspicious" then
-                if self.NPCModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
-                    self.NPCModel:SetAttribute("playerToLookAt", playerToTrack.Name)
+                if npcModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
+                    npcModel:SetAttribute("playerToLookAt", playerToTrack.Name)
                 end
-                nextWaypoint = determineNextWaypoint(self.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
+                nextWaypoint = determineNextWaypoint(npcModel, charToTrack.HumanoidRootPart, npcModel:GetAttribute("compromised"))
                 
             elseif newState == "Alert" then
-                self.NPCModel:SetAttribute("compromised", true)
+                npcModel:SetAttribute("compromised", true)
                 if promises.movePromise ~= nil and promises.movePromise:getStatus() ~= "Started" then
                     promises.movePromise:cancel()
                     task.wait(1)
                 end
                 if npcClass == "Police" or npcClass == "Cartel" then
-                    nextWaypoint = determineNextWaypoint(self.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
+                    nextWaypoint = determineNextWaypoint(npcModel, charToTrack.HumanoidRootPart, npcModel:GetAttribute("compromised"))
                     
                     if promises.combatPromise ~= nil and promises.combatPromise:getStatus() == "Started" then
                         promises.combatPromise:cancel()
@@ -270,19 +274,19 @@ function NPC:Active()
                     promises.combatPromise = Combat(self, playerToTrack)
                     
                     task.delay(2, function()
-                        if self.NPCModel.Humanoid.Health > 0 then
-                            self.NPCModel:SetAttribute("playerToLookAt", nil)
-                            self.NPCModel:SetAttribute("State", "Hostile")
+                        if npcModel.Humanoid.Health > 0 then
+                            npcModel:SetAttribute("playerToLookAt", nil)
+                            npcModel:SetAttribute("State", "Hostile")
                         end
                     end)
                 else
-                    nextWaypoint = determineNextWaypoint(self.NPCModel, nil, true)
+                    nextWaypoint = determineNextWaypoint(npcModel, nil, true)
                     
                     task.delay(5, function()
-                        if self.NPCModel.Humanoid.Health > 0 then
+                        if npcModel.Humanoid.Health > 0 then
                             -- TODO: Signal: call 911
-                            self.NPCModel:SetAttribute("playerToLookAt", nil)
-                            self.NPCModel:SetAttribute("State", "Hostile")
+                            npcModel:SetAttribute("playerToLookAt", nil)
+                            npcModel:SetAttribute("State", "Hostile")
                             -- TODO: Signal: total compromised
                         end
                     end)
@@ -291,27 +295,27 @@ function NPC:Active()
                 
                 
             elseif newState == "Hostile" then
-                self.NPCModel:SetAttribute("compromised", true)
+                npcModel:SetAttribute("compromised", true)
                 if promises.movePromise ~= nil and promises.movePromise:getStatus() ~= "Started" then
                     promises.movePromise:cancel()
                     task.wait(1)
                 end
                 if npcClass == "Police" or npcClass == "Cartel" then
-                    nextWaypoint = determineNextWaypoint(self.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
+                    nextWaypoint = determineNextWaypoint(npcModel, charToTrack.HumanoidRootPart, npcModel:GetAttribute("compromised"))
                     
                     if promises.combatPromise ~= nil and promises.combatPromise:getStatus() ~= "Started" then
                         promises.combatPromise = Combat(self, playerToTrack)
                     end
 
                 else
-                    nextWaypoint = determineNextWaypoint(self.NPCModel, nil, true)
+                    nextWaypoint = determineNextWaypoint(npcModel, nil, true)
                     
                 end
                 
             end
              
             if nextWaypoint then
-                self.NPCModel:SetAttribute("NextWaypointToken", nextWaypoint)
+                npcModel:SetAttribute("NextWaypointToken", nextWaypoint)
             end
             
             resolve()
@@ -320,9 +324,13 @@ function NPC:Active()
     end)
     
 	-- listen for NPC's next waypoint changing signal
-    connections.waypointChangeConnection = self.NPCModel:GetAttributeChangedSignal("NextWaypointToken"):Connect(function()  
+    connections.waypointChangeConnection = npcModel:GetAttributeChangedSignal("NextWaypointToken"):Connect(function()  
         
-        local waypoint = findWaypointGivenToken(self.NPCModel:GetAttribute("NextWaypointToken"))
+        local waypoint = findWaypointGivenToken(npcModel:GetAttribute("NextWaypointToken")):: Types.Waypoint | nil
+        
+        if waypoint == nil then
+            return
+        end
         
         -- cancel any previous promises.movePromise
         if promises.movePromise ~= nil and promises.movePromise:getStatus() == "Started" then
@@ -334,8 +342,8 @@ function NPC:Active()
             
             local function computePath()
                 task.delay(math.random(1, 5), function()
-                    local nextWaypoint = determineNextWaypoint(self.NPCModel, nil, self.NPCModel:GetAttribute("compromised"))
-                    self.NPCModel:SetAttribute("NextWaypointToken", nextWaypoint)
+                    local nextWaypoint = determineNextWaypoint(npcModel, nil, npcModel:GetAttribute("compromised"))
+                    npcModel:SetAttribute("NextWaypointToken", nextWaypoint)
                 end)
                 resolve()
             end
@@ -367,10 +375,10 @@ function NPC:Active()
     end)
 	
     -- listen for NPC's turn head signal
-    connections.lookAtChangeConnection = self.NPCModel:GetAttributeChangedSignal("playerToLookAt"):Connect(function()
+    connections.lookAtChangeConnection = npcModel:GetAttributeChangedSignal("playerToLookAt"):Connect(function()
         local targetPlayer = 
-            if self.NPCModel:GetAttribute("playerToLookAt") ~= nil then 
-             Players:FindFirstChild(self.NPCModel:GetAttribute("playerToLookAt")) 
+            if npcModel:GetAttribute("playerToLookAt") ~= nil then 
+             Players:FindFirstChild(npcModel:GetAttribute("playerToLookAt")) 
             else 
                 nil 
             :: Player | nil
@@ -404,34 +412,34 @@ function NPC:Active()
     end) 
     
     -- listen for death
-    self.NPCModel.Humanoid.Died:Connect(function()
-        ragdollOnDeath(self.NPCModel)
+    npcModel.Humanoid.Died:Connect(function()
+        ragdollOnDeath(npcModel)
         disconnectAllPromises(promises)
         UpdateIndicator(self, "Safe")
         disconnectAllConnections(connections)
     end)
     
     -- listen for NPC's parent changing signal
-    self.NPCModel.AncestryChanged:Connect(function()
+    npcModel.AncestryChanged:Connect(function()
         UpdateIndicator(self, "Safe")
         disconnectAllPromises(promises)
-        CollectionService:RemoveTag(self.NPCModel, TAG_NAME)
-        if not self.NPCModel:IsDescendantOf(workspace) then
+        CollectionService:RemoveTag(npcModel, TAG_NAME)
+        if not npcModel:IsDescendantOf(workspace) then
         disconnectAllConnections(connections)
         end
     end)
     
     -- initialize move
     task.spawn(function()
-        local nextWaypointToken = determineNextWaypoint(self.NPCModel, nil, self.NPCModel:GetAttribute("compromised"))
-        self.NPCModel:PivotTo(findWaypointGivenToken(nextWaypointToken):GetPivot())
+        local nextWaypointToken = determineNextWaypoint(npcModel, nil, npcModel:GetAttribute("compromised"))
+        local waypoint = findWaypointGivenToken(nextWaypointToken) :: Types.Waypoint | nil
+        if waypoint == nil then return end
+        npcModel:PivotTo(waypoint:GetPivot())
         task.wait(0.5)
-        nextWaypointToken = determineNextWaypoint(self.NPCModel, nil, self.NPCModel:GetAttribute("compromised"))
-        self.NPCModel:SetAttribute("NextWaypointToken", nextWaypointToken)
+        nextWaypointToken = determineNextWaypoint(npcModel, nil, npcModel:GetAttribute("compromised"))
+        npcModel:SetAttribute("NextWaypointToken", nextWaypointToken)
     end)
     
 end
-
-
 
 return NPC
