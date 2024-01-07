@@ -384,3 +384,4 @@ function NPC:Destroy()
 end
 
 return NPC
+

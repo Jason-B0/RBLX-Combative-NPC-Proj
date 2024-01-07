@@ -36,6 +36,9 @@ local locationState = require(Helper.LocationState)
 local operationState = require(Helper.OperationState)
 
 --==========================================
+function ClientNPCController:SetOperationState(state: string)
+    operationState:set(state)
+end
 
 function ClientNPCController:Render()
     local torso = Character:WaitForChild("Torso") :: BasePart
@@ -154,18 +157,6 @@ function ClientNPCController:Render()
         end
     end)
     
-    -- proximity prompt
-    ProximityPromptService.PromptButtonHoldBegan:Connect(function(prompt, player)
-        if prompt.Name == "NPCPrompt" then
-            operationState:set("Illegal Action")
-        end
-    end)
-    
-    ProximityPromptService.PromptButtonHoldEnded:Connect(function(prompt, player)
-        if prompt.Name == "NPCPrompt" then
-            operationState:set("Safe")
-        end
-    end)
 end
 
 --==========================================
