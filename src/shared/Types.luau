@@ -17,6 +17,26 @@ export type NPCEvent = {
     promises: {[any]: Promise};    
 }
 
+export type NPCClass = {
+    new: (npcModel: NPCModel, class: string?) -> NPC,
+    __index: NPCClass,
+
+    Active: () -> (),
+
+    ChangeState: () -> (),
+
+    Safe: () -> (),
+    Curious: () -> (),
+    Suspicious: () -> (),
+    Alert: () -> (),
+    Hostile: () -> (),
+    
+    ChangeWaypoint: () -> (),
+    ChangePlayerToLookAt: () -> (),
+
+
+}
+
 export type NPC = {
     npcModel: NPCModel,
     npcClass: string,
@@ -26,6 +46,7 @@ export type NPC = {
     promises: {[any]: Promise},
     connections: {[any]: RBXScriptConnection},
 }
+
 export type NPCModel = Model & {
     HumanoidRootPart: BasePart,
     Humanoid: Humanoid & {

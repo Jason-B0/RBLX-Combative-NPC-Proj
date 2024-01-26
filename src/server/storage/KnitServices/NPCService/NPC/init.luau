@@ -98,7 +98,7 @@ function NPC.new(npcModel: Types.NPCModel, class: string?)
 end
 
 
-function NPC:Active(initPosition: CFrame?)
+function NPC:Active(initPosition: CFrame?): nil
 
     self.connections.stateChangeConnection = self.NPCModel:GetAttributeChangedSignal("State"):Connect(self.ChangeState)
     self.connections.waypointChangeConnection = self.NPCModel:GetAttributeChangedSignal("NextWaypointToken"):Connect(self.ChangeWaypoint)
@@ -123,7 +123,7 @@ function NPC:Active(initPosition: CFrame?)
 end
 
 
-function NPC:ChangeState()
+function NPC:ChangeState(): nil
     local npcModel = self.NPCModel :: Types.NPCModel
     local npcClass = npcModel:GetAttribute("Class") :: string
     local playerToTrack = if npcModel:GetAttribute("playerToTrack") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("playerToTrack")) else nil :: Player | nil
@@ -237,16 +237,16 @@ function NPC:ChangeState()
 end
 
 
-function NPC:Safe()
+function NPC:Safe(): nil
     self.NPCModel:SetAttribute("playerToTrack", nil)
     self.NPCModel:SetAttribute("playerToLookAt", nil)
 end
 
-function NPC:Curious()
+function NPC:Curious(): nil
     self.NPCModel:SetAttribute("playerToLookAt", self.NPCModel:GetAttribute("playerToTrack"))
 end
 
-function NPC:Suspicious()
+function NPC:Suspicious(): nil
     local playerToTrack = Players:FindFirstChild(self.NPCModel:GetAttribute("playerToTrack")) :: Player
     if self.NPCModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
         self.NPCModel:SetAttribute("playerToLookAt", playerToTrack.Name)
@@ -256,7 +256,7 @@ function NPC:Suspicious()
     self.NPCModel:SetAttribute("NextWaypointToken", nextWaypoint)
 end
 
-function NPC:Alert()
+function NPC:Alert(): nil
     local npcModel = self.NPCModel :: Types.NPCModel
     npcModel:SetAttribute("compromised", true)
     
@@ -279,7 +279,7 @@ function NPC:Alert()
     
 end
 
-function NPC:Hostile()
+function NPC:Hostile(): nil
     local npcModel = self.NPCModel :: Types.NPCModel
     npcModel:SetAttribute("compromised", true)
     
@@ -293,7 +293,7 @@ function NPC:Hostile()
     
 end
 
-function NPC:ChangeWaypoint()
+function NPC:ChangeWaypoint(): nil
     local npcModel = self.NPCModel :: Types.NPCModel
     local waypoint = findWaypointGivenToken(npcModel:GetAttribute("NextWaypointToken"))
 
@@ -340,7 +340,7 @@ function NPC:ChangeWaypoint()
     end)
 end
 
-function NPC:ChangePlayerToLookAt()
+function NPC:ChangePlayerToLookAt(): nil
     local targetPlayer = if self.NPCModel:GetAttribute("playerToLookAt") ~= nil
         then Players:FindFirstChild(self.NPCModel:GetAttribute("playerToLookAt"))
         else nil :: Player | nil
@@ -372,13 +372,13 @@ function NPC:ChangePlayerToLookAt()
     end
 end
 
-function NPC:Died()
+function NPC:Died(): nil
     ragdollOnDeath(self.NPCModel)
     disconnectAllPromises(self.promises)
     UpdateIndicator(self, "Safe")
 end
 
-function NPC:Destroy()
+function NPC:Destroy(): nil
     UpdateIndicator(self, "Safe")
     disconnectAllPromises(self.promises)
     CollectionService:RemoveTag(self.NPCModel :: Types.NPCModel, TAG_NAME)
