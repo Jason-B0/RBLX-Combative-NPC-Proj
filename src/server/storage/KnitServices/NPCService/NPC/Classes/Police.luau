@@ -1,5 +1,6 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local Types = require(ReplicatedStorage.Shared.Types)
 local NPC = require(script.Parent.Parent)
 
@@ -20,22 +21,30 @@ function NPC:Safe()
 end
 
 function NPC:Curious()
-    self.NPCModel:SetAttribute("playerToLookAt", self.NPCModel:GetAttribute("playerToTrack"))
+    
 end
 
 function NPC:Suspicious()
-    self.NPCModel:SetAttribute("playerToTrack", nil)
-    self.NPCModel:SetAttribute("playerToLookAt", nil)
+    local playerToTrack =
+        Players:FindFirstChild(self.NPCModel:GetAttribute("playerToTrack")) :: Player
+    if self.NPCModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
+        self.NPCModel:SetAttribute("playerToLookAt", playerToTrack.Name)
+    end
+    local charToTrack = playerToTrack.Character :: Types.Character
+    local nextWaypoint = determineNextWaypoint(
+        self.NPCModel :: Types.NPCModel,
+        charToTrack.HumanoidRootPart,
+        self.NPCModel:GetAttribute("compromised")
+    )
+    self.NPCModel:SetAttribute("NextWaypointToken", nextWaypoint)
 end
 
 function NPC:Alert()
-    self.NPCModel:SetAttribute("playerToTrack", nil)
-    self.NPCModel:SetAttribute("playerToLookAt", nil)
+    
 end
 
 function NPC:Hostile()
-    self.NPCModel:SetAttribute("playerToTrack", nil)
-    self.NPCModel:SetAttribute("playerToLookAt", nil)
+    
 end
 
 return Military

@@ -1,4 +1,7 @@
 --!strict
+
+-- NPC Abstract class
+
 local CollectionService = game:GetService("CollectionService")
 local PathfindingService = game:GetService("PathfindingService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -43,7 +46,7 @@ local ragdollOnDeath = require(Helper.RagdollOnDeath)
 local determineNextWaypoint = require(Helper.DetermineNextWaypoint)
 local findWaypointGivenToken = require(Helper.FindWaypointWithToken)
 local disconnectAllPromises = function(prom: {[any]: Promise})
-    for _, promise: Promise in pairs(prom) do
+    for _, promise: Promise | nil in pairs(prom) do
         if promise ~= nil and promise:getStatus() == "Started" then    
             promise:cancel()
             promise = nil
@@ -75,7 +78,7 @@ local InitialProps = {
     connections = {} :: {[any]: RBXScriptConnection},
 }
 
-function NPC.new(npcModel: Types.NPCModel, class: string?)
+function NPC.new(npcModel: Types.NPCModel, class: string?): NPC
     Knit.OnStart():awaitStatus()
     TokenService = Knit.GetService("TokenService")
     local newNPC = table.clone(InitialProps)
@@ -243,17 +246,11 @@ function NPC:Safe(): nil
 end
 
 function NPC:Curious(): nil
-    self.NPCModel:SetAttribute("playerToLookAt", self.NPCModel:GetAttribute("playerToTrack"))
+    error("Cannot be directly called, this is to be implemented by subclasses.")
 end
 
 function NPC:Suspicious(): nil
-    local playerToTrack = Players:FindFirstChild(self.NPCModel:GetAttribute("playerToTrack")) :: Player
-    if self.NPCModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
-        self.NPCModel:SetAttribute("playerToLookAt", playerToTrack.Name)
-    end
-    local charToTrack = playerToTrack.Character :: Types.Character
-    local nextWaypoint = determineNextWaypoint(self.NPCModel :: Types.NPCModel, charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
-    self.NPCModel:SetAttribute("NextWaypointToken", nextWaypoint)
+    error("Cannot be directly called, this is to be implemented by subclasses.")
 end
 
 function NPC:Alert(): nil
