@@ -101,7 +101,7 @@ function NPC:new(npcModel: Types.NPCModel, class: string?): any
 end
 
 
-function NPC:Active(initPosition: CFrame?): nil
+function NPC:Active(initPosition: CFrame?): ()
 
     self.connections.stateChangeConnection = self.NPCModel:GetAttributeChangedSignal("State"):Connect(self.ChangeState)
     self.connections.waypointChangeConnection = self.NPCModel:GetAttributeChangedSignal("NextWaypointToken"):Connect(self.ChangeWaypoint)
@@ -126,7 +126,7 @@ function NPC:Active(initPosition: CFrame?): nil
 end
 
 
-function NPC:ChangeState(): nil
+function NPC:ChangeState(): ()
     local npcModel = self.NPCModel :: Types.NPCModel
     local npcClass = npcModel:GetAttribute("Class") :: string
     local playerToTrack = if npcModel:GetAttribute("playerToTrack") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("playerToTrack")) else nil :: Player | nil
@@ -240,20 +240,20 @@ function NPC:ChangeState(): nil
 end
 
 
-function NPC:Safe(): nil
+function NPC:Safe(): ()
     self.NPCModel:SetAttribute("playerToTrack", nil)
     self.NPCModel:SetAttribute("playerToLookAt", nil)
 end
 
-function NPC:Curious(): nil
+function NPC:Curious(): ()
     error("Cannot be directly called, this is to be implemented by subclasses.")
 end
 
-function NPC:Suspicious(): nil
+function NPC:Suspicious(): ()
     error("Cannot be directly called, this is to be implemented by subclasses.")
 end
 
-function NPC:Alert(): nil
+function NPC:Alert(): ()
     local npcModel = self.NPCModel :: Types.NPCModel
     npcModel:SetAttribute("compromised", true)
     
@@ -276,7 +276,7 @@ function NPC:Alert(): nil
     
 end
 
-function NPC:Hostile(): nil
+function NPC:Hostile(): ()
     local npcModel = self.NPCModel :: Types.NPCModel
     npcModel:SetAttribute("compromised", true)
     
@@ -290,7 +290,7 @@ function NPC:Hostile(): nil
     
 end
 
-function NPC:ChangeWaypoint(): nil
+function NPC:ChangeWaypoint(): ()
     local npcModel = self.NPCModel :: Types.NPCModel
     local waypoint = findWaypointGivenToken(npcModel:GetAttribute("NextWaypointToken"))
 
@@ -337,7 +337,7 @@ function NPC:ChangeWaypoint(): nil
     end)
 end
 
-function NPC:ChangePlayerToLookAt(): nil
+function NPC:ChangePlayerToLookAt(): ()
     local targetPlayer = if self.NPCModel:GetAttribute("playerToLookAt") ~= nil
         then Players:FindFirstChild(self.NPCModel:GetAttribute("playerToLookAt"))
         else nil :: Player | nil
@@ -369,13 +369,13 @@ function NPC:ChangePlayerToLookAt(): nil
     end
 end
 
-function NPC:Died(): nil
+function NPC:Died(): ()
     ragdollOnDeath(self.NPCModel)
     disconnectAllPromises(self.promises)
     UpdateIndicator(self, "Safe")
 end
 
-function NPC:Destroy(): nil
+function NPC:Destroy(): ()
     UpdateIndicator(self, "Safe")
     disconnectAllPromises(self.promises)
     CollectionService:RemoveTag(self.NPCModel :: Types.NPCModel, TAG_NAME)

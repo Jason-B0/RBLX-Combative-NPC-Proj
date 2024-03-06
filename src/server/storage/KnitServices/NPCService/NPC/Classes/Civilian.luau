@@ -49,16 +49,16 @@ function Civilian:new(npcModel: Types.NPCModel, class: string?): any
 	return setmetatable(newNPC, Civilian)
 end
 
-function Civilian:Safe()
+function Civilian:Safe(): ()
     self.NPCModel:SetAttribute("playerToTrack", nil)
     self.NPCModel:SetAttribute("playerToLookAt", nil)
 end
 
-function Civilian:Curious()
+function Civilian:Curious(): ()
     self.NPCModel:SetAttribute("playerToLookAt", self.NPCModel:GetAttribute("playerToTrack"))
 end
 
-function Civilian:Suspicious()
+function Civilian:Suspicious(): ()
     local playerToTrack =
         Players:FindFirstChild(self.NPCModel:GetAttribute("playerToTrack")) :: Player
     if self.NPCModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
@@ -73,12 +73,12 @@ function Civilian:Suspicious()
     self.NPCModel:SetAttribute("NextWaypointToken", nextWaypoint)
 end
 
-function Civilian:Alert()
+function Civilian:Alert(): ()
     self.NPCModel:SetAttribute("playerToTrack", nil)
     self.NPCModel:SetAttribute("playerToLookAt", nil)
 end
 
-function Civilian:Hostile()
+function Civilian:Hostile(): ()
     self.NPCModel:SetAttribute("playerToTrack", nil)
     self.NPCModel:SetAttribute("playerToLookAt", nil)
 end
