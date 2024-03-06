@@ -78,8 +78,9 @@ local InitialProps = {
     connections = {} :: {[any]: RBXScriptConnection},
 }
 
-function NPC.new(npcModel: Types.NPCModel, class: string?): NPC
+function NPC:new(npcModel: Types.NPCModel, class: string?): any
     Knit.OnStart():awaitStatus()
+    self.__index = self
     TokenService = Knit.GetService("TokenService")
     local newNPC = table.clone(InitialProps)
     
@@ -96,7 +97,6 @@ function NPC.new(npcModel: Types.NPCModel, class: string?): NPC
 
     -- add tag to NPC
     CollectionService:AddTag(newNPC.npcModel, TAG_NAME)
-        
     return setmetatable(newNPC, NPC)
 end
 

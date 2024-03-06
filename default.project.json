@@ -25,7 +25,12 @@
     "ServerStorage": {
       "$ignoreUnknownInstances": true,
       "$className": "ServerStorage",
-      "$path": "src/server/storage"
+      "$path": "src/server/storage",
+
+      "NPC_Waypoints": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": true
+      }
     },
     
     "StarterPlayer": {
