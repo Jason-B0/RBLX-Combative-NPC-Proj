@@ -5,37 +5,38 @@ local NPC = require(script.Parent.Parent)
 
 --=========== MODULE ================
 
-local Military = {} :: Types.NPCClass
-Military.__index = Military
+local MilitaryNPC = {}
+MilitaryNPC.__index = MilitaryNPC
+setmetatable(MilitaryNPC, NPC)
 
-function Military.new(npcModel: Types.NPCModel, class: string?)
-	local newNPCWorker = NPC.new(npcModel, "Military") :: Types.NPC
+function MilitaryNPC:new(npcModel: Types.NPCModel, class: string?)
+	local newNPC = NPC:new(npcModel, "Military") :: Types.NPC
 	
-	return setmetatable(Military, newNPCWorker)
+	return setmetatable(newNPC, MilitaryNPC)
 end
 
-function NPC:Safe()
+function MilitaryNPC:Safe()
     self.NPCModel:SetAttribute("playerToTrack", nil)
     self.NPCModel:SetAttribute("playerToLookAt", nil)
 end
 
-function NPC:Curious()
+function MilitaryNPC:Curious()
     self.NPCModel:SetAttribute("playerToLookAt", self.NPCModel:GetAttribute("playerToTrack"))
 end
 
-function NPC:Suspicious()
+function MilitaryNPC:Suspicious()
     self.NPCModel:SetAttribute("playerToTrack", nil)
     self.NPCModel:SetAttribute("playerToLookAt", nil)
 end
 
-function NPC:Alert()
+function MilitaryNPC:Alert()
     self.NPCModel:SetAttribute("playerToTrack", nil)
     self.NPCModel:SetAttribute("playerToLookAt", nil)
 end
 
-function NPC:Hostile()
+function MilitaryNPC:Hostile()
     self.NPCModel:SetAttribute("playerToTrack", nil)
     self.NPCModel:SetAttribute("playerToLookAt", nil)
 end
 
-return Military
+return MilitaryNPC

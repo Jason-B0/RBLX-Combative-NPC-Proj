@@ -39,25 +39,26 @@ end
 
 --=========== MODULE ================
 
-local Civilian = {} :: Types.NPCClass
+local Civilian = {}
 Civilian.__index = Civilian
+setmetatable(Civilian, NPC)
 
-function Civilian.new(npcModel: Types.NPCModel, class: string?)
-	local newNPCWorker = NPC.new(npcModel, "Civilian") :: Types.NPC
+function Civilian:new(npcModel: Types.NPCModel, class: string?): any
+	local newNPC = NPC:new(npcModel, "Civilian") :: Types.NPC
 	
-	return setmetatable(Civilian, newNPCWorker)
+	return setmetatable(newNPC, Civilian)
 end
 
-function NPC:Safe()
+function Civilian:Safe()
     self.NPCModel:SetAttribute("playerToTrack", nil)
     self.NPCModel:SetAttribute("playerToLookAt", nil)
 end
 
-function NPC:Curious()
+function Civilian:Curious()
     self.NPCModel:SetAttribute("playerToLookAt", self.NPCModel:GetAttribute("playerToTrack"))
 end
 
-function NPC:Suspicious()
+function Civilian:Suspicious()
     local playerToTrack =
         Players:FindFirstChild(self.NPCModel:GetAttribute("playerToTrack")) :: Player
     if self.NPCModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
@@ -72,12 +73,12 @@ function NPC:Suspicious()
     self.NPCModel:SetAttribute("NextWaypointToken", nextWaypoint)
 end
 
-function NPC:Alert()
+function Civilian:Alert()
     self.NPCModel:SetAttribute("playerToTrack", nil)
     self.NPCModel:SetAttribute("playerToLookAt", nil)
 end
 
-function NPC:Hostile()
+function Civilian:Hostile()
     self.NPCModel:SetAttribute("playerToTrack", nil)
     self.NPCModel:SetAttribute("playerToLookAt", nil)
 end

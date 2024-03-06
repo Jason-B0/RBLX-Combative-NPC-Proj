@@ -59,30 +59,37 @@
         "FilteringEnabled": true
       },
       
-      "NPC_Waypoints": {
-        "$className": "Folder",
-        "$ignoreUnknownInstances": true,
-        
-        "EvadeWaypoints": {
-          "$className": "Folder",
-          "$ignoreUnknownInstances": true
-        }
-      },
-      
-      "NPC": {
-        "$className": "Folder"
-      },
-      
       "GAME_WORKSPACE": {
         "$className": "Folder",
         "$ignoreUnknownInstances": true,
+
         "InvisWalls": {
           "$className": "Folder",
           "$ignoreUnknownInstances": true
         },
+
         "NPCAvoid": {
           "$className": "Folder",
           "$ignoreUnknownInstances": true
+        },
+
+        "NPC_Waypoints": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": true,
+          
+          "EvadeWaypoints": {
+            "$className": "Folder",
+            "$ignoreUnknownInstances": true
+          },
+
+          "TrackingFolder": {
+            "$className": "Folder",
+            "$ignoreUnknownInstances": true
+          }
+        },
+        
+        "NPC": {
+          "$className": "Folder"
         }
       }
         

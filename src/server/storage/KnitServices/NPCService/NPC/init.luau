@@ -14,10 +14,7 @@ local Signal = require(ReplicatedStorage.Packages.Signal)
 local Types = require(ReplicatedStorage.Shared.Types)
 
 local TAG_NAME = "NPC"
-
-local WAYPOINT_FOLDER = workspace.NPC_Waypoints :: Folder
-local TRACKING_FOLDER = WAYPOINT_FOLDER:FindFirstChild("TrackingFolder") :: Folder
-local EVADE_FOLDER = WAYPOINT_FOLDER:FindFirstChild("EvadeWaypoints") :: Folder
+local CONFIG = require(script.Config)
 
 local TokenService
 task.spawn(function()
@@ -79,25 +76,28 @@ local InitialProps = {
 }
 
 function NPC:new(npcModel: Types.NPCModel, class: string?): any
-    Knit.OnStart():awaitStatus()
-    self.__index = self
-    TokenService = Knit.GetService("TokenService")
-    local newNPC = table.clone(InitialProps)
-    
-    -- set up NPC model
-    newNPC.npcModel = SetupModel(npcModel, TokenService:GenerateToken("npc"), class) :: Types.NPCModel
-    newNPC.npcModel.Parent = workspace.NPC
 
-    -- set up collision group
-    for _, v in pairs(newNPC.npcModel:GetDescendants()) do
-        if v:IsA("BasePart") then
-            v.CollisionGroup = TAG_NAME
+    local function setCollisionGroup(_npcModel: Types.NPCModel, _tagName: string)
+        for _, v in pairs(_npcModel:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CollisionGroup = _tagName
+            end
         end
     end
 
-    -- add tag to NPC
+    Knit.OnStart():awaitStatus()
+    TokenService = Knit.GetService("TokenService")
+
+    -- set up NPC model
+    local newNPC = table.clone(InitialProps)
+    newNPC.npcModel = SetupModel(npcModel, TokenService:GenerateToken("npc"), class) :: Types.NPCModel
+    newNPC.npcModel.Parent = CONFIG.NPC_CONTAINER_DIR
+    setmetatable(newNPC, NPC)
+
+    setCollisionGroup(newNPC.npcModel, "NPC")
     CollectionService:AddTag(newNPC.npcModel, TAG_NAME)
-    return setmetatable(newNPC, NPC)
+
+    return newNPC
 end
 
 
