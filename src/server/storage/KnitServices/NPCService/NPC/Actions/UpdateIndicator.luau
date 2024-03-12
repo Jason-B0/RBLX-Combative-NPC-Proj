@@ -17,7 +17,7 @@ local INDICATOR_COLOR = {
 }
 
 return function(self, state: string)
-	local stateIndicator = self.NPCModel.StateBillboard.StateIndicator :: ImageLabel
+	local stateIndicator = self.npcModel.StateBillboard.StateIndicator :: ImageLabel
 	
 	if state == "Safe" then
 		stateIndicator.Visible = false

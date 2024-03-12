@@ -1,3 +1,5 @@
+local ServerStorage = game:GetService("ServerStorage")
+local GAME_WORKSPACE = workspace:WaitForChild("GAME_WORKSPACE")
 return {
 	NPC_DEFAULT_ATTRIBUTES = {
 		-- attributes
@@ -15,12 +17,14 @@ return {
 		currentEventId = "	",
 	};
 
-	NPC_AVOID_DIR = workspace.GAME_WORKSPACE:FindFirstChild("NPCAvoid");
+	NPC_ORG_MODEL = ServerStorage:WaitForChild("Assets"):WaitForChild("NPC") :: Model;
 
-	NPC_WAYPOINT_DIR = workspace.GAME_WORKSPACE:FindFirstChild("NPC_Waypoints");
-	NPC_WAYPOINT_EVADE_DIR = workspace.GAME_WORKSPACE:FindFirstChild("NPC_Waypoints"):FindFirstChild("EvadeWaypoints");
-	NPC_WAYPOINT_TRACK_DIR = workspace.GAME_WORKSPACE:FindFirstChild("NPC_Waypoints"):FindFirstChild("TrackingFolder");
+	NPC_AVOID_DIR = GAME_WORKSPACE:FindFirstChild("NPCAvoid");
 
-	NPC_CONTAINER_DIR = workspace.GAME_WORKSPACE:FindFirstChild("NPC");
+	NPC_WAYPOINT_DIR = GAME_WORKSPACE:FindFirstChild("NPC_Waypoints");
+	NPC_WAYPOINT_EVADE_DIR = GAME_WORKSPACE:FindFirstChild("NPC_Waypoints"):FindFirstChild("EvadeWaypoints");
+	NPC_WAYPOINT_TRACK_DIR = GAME_WORKSPACE:FindFirstChild("NPC_Waypoints"):FindFirstChild("TrackingFolder");
+
+	NPC_CONTAINER_DIR = GAME_WORKSPACE:FindFirstChild("NPC");
 
 }

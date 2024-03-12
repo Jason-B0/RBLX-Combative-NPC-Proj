@@ -21,7 +21,9 @@ local Promise = require(ReplicatedStorage.Packages.Promise)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local Types = require(ReplicatedStorage.Shared.Types)
 
-local NPCClass = require(script.NPC)
+local NPCClassFolder = script.NPC.Classes
+local NPCClasses = {}
+
 local CONFIG = require(script.NPC.Config)
 --=================================
 local NPCService = Knit.CreateService({
@@ -89,12 +91,14 @@ end
 
 -- NPC creation
 function NPCService:CreateNewNPC(class: string?, position: CFrame?)
+    print(class, position)
     local newNPCModel = Assets:FindFirstChild("NPC"):Clone() :: Types.NPCModel
     newNPCModel.Parent = self.NPC_FOLDER
-    local newNPC = NPCClass:new(
+    local newNPC = NPCClasses[class].new(
         newNPCModel, 
-        if class ~= nil then class else "Civilian"
-    )
+        class
+    ) 
+
     newNPC:Active(position)
     
     return newNPC
@@ -123,6 +127,7 @@ function NPCService:KnitStart()
 	-- set up all waypoint to be tagged with a token
 	for _, waypoint: Types.Waypoint | Instance in pairs(CONFIG.NPC_WAYPOINT_DIR:GetDescendants()) do
 		if waypoint:IsA("BasePart") then
+            waypoint.Transparency = 1
 			waypoint:SetAttribute("WaypointToken", TokenService:GenerateToken("wp"))
 		end
 	end 
@@ -135,6 +140,11 @@ function NPCService:KnitStart()
 end
 
 function NPCService:KnitInit()
+    for _, v: ModuleScript in pairs(NPCClassFolder:GetChildren()) do
+        if v:IsA("ModuleScript") then
+            NPCClasses[v.Name] = require(v)
+        end
+    end
     for _, v: BasePart | Model in pairs(CONFIG.NPC_AVOID_DIR:GetChildren()) do
         local size
         if v:IsA("Model") then
@@ -159,7 +169,7 @@ function NPCService:KnitInit()
         pathfindingModifier.Parent = newPart
     
     end
-    
+
 end
 
 return NPCService

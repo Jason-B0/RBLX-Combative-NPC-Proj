@@ -2,7 +2,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Types = require(ReplicatedStorage.Shared.Types)
-local NPC = require(script.Parent.Parent)
+local NPC = require(script.Parent.Superclass)
 
 --=========== NPC FUNCTIONS ================
 
@@ -43,44 +43,44 @@ local Civilian = {}
 Civilian.__index = Civilian
 setmetatable(Civilian, NPC)
 
-function Civilian:new(npcModel: Types.NPCModel, class: string?): any
-	local newNPC = NPC:new(npcModel, "Civilian") :: Types.NPC
+function Civilian.new(npcModel: Types.NPCModel, class: string?): any
+	local newNPC = NPC.new(npcModel, "Civilian") :: Types.NPC
 	
 	return setmetatable(newNPC, Civilian)
 end
 
 function Civilian:Safe(): ()
-    self.NPCModel:SetAttribute("playerToTrack", nil)
-    self.NPCModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("playerToTrack", nil)
+    self.npcModel:SetAttribute("playerToLookAt", nil)
 end
 
 function Civilian:Curious(): ()
-    self.NPCModel:SetAttribute("playerToLookAt", self.NPCModel:GetAttribute("playerToTrack"))
+    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("playerToTrack"))
 end
 
 function Civilian:Suspicious(): ()
     local playerToTrack =
-        Players:FindFirstChild(self.NPCModel:GetAttribute("playerToTrack")) :: Player
-    if self.NPCModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
-        self.NPCModel:SetAttribute("playerToLookAt", playerToTrack.Name)
+        Players:FindFirstChild(self.npcModel:GetAttribute("playerToTrack")) :: Player
+    if self.npcModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
+        self.npcModel:SetAttribute("playerToLookAt", playerToTrack.Name)
     end
     local charToTrack = playerToTrack.Character :: Types.Character
     local nextWaypoint = determineNextWaypoint(
-        self.NPCModel :: Types.NPCModel,
+        self.npcModel :: Types.NPCModel,
         charToTrack.HumanoidRootPart,
-        self.NPCModel:GetAttribute("compromised")
+        self.npcModel:GetAttribute("compromised")
     )
-    self.NPCModel:SetAttribute("NextWaypointToken", nextWaypoint)
+    self.npcModel:SetAttribute("NextWaypointToken", nextWaypoint)
 end
 
 function Civilian:Alert(): ()
-    self.NPCModel:SetAttribute("playerToTrack", nil)
-    self.NPCModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("playerToTrack", nil)
+    self.npcModel:SetAttribute("playerToLookAt", nil)
 end
 
 function Civilian:Hostile(): ()
-    self.NPCModel:SetAttribute("playerToTrack", nil)
-    self.NPCModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("playerToTrack", nil)
+    self.npcModel:SetAttribute("playerToLookAt", nil)
 end
 
 return Civilian

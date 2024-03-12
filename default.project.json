@@ -61,7 +61,11 @@
       
       "GAME_WORKSPACE": {
         "$className": "Folder",
-        "$ignoreUnknownInstances": true,
+
+        "Loadout_Workspace": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": true
+        },
 
         "InvisWalls": {
           "$className": "Folder",

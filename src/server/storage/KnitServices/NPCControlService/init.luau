@@ -18,29 +18,19 @@ local NPCEvent = require(script.Events)
 local NPCControlService = Knit.CreateService({
     Name = "NPCControlService",
     Client = {},
-    
+
+	isMoveEnabled = false,
+	isAttackEnabled = false,
+
 	Config_Test = {
-		
-		isMoveEnabled = false,
-		isAttackEnabled = false,
-		
-		["Civilian"] = 3,
-		["Police"] = 3,
-		["Cartel"] = 3,
-		["DockWorker"] = 3,
-		["DockAdmin"] =  0,
-		
-		eventCount = 1,
+		["USNavy"] = 15,
+		["CSG1"] = 15,
 	},
 	
 	Config = {
-		["Civilian"] = 25,
-		["Police"] = 10,
-		["Cartel"] = 15,
-		["DockWorker"] = 30,
-		["DockAdmin"] = 0,
-		
-		eventCount = 1,
+		["USNavy"] = 25,
+		["CSG1"] = 25,
+
 	},
 	
 	NPCEvents = {} :: {Types.NPCEvent},
@@ -48,17 +38,12 @@ local NPCControlService = Knit.CreateService({
 local NPCService
 --=================================
 local function spawnNPC(npcClass: string, position: CFrame?)
-	assert(NPCControlService.Config[npcClass], "Invalid NPC type: "..npcClass)
-    task.spawn(function()
-        for _ = 1,  if not RunService:IsStudio() then 
-									NPCControlService.Config[npcClass] 
-								else 
-									NPCControlService.Config_Test[npcClass] 
-		do
-            NPCService:CreateNewNPC(npcClass, position)
-            task.wait(0.1)
-        end
-    end)
+	assert(NPCControlService.Config[npcClass], "Invalid NPC type: ".. npcClass)
+    local configToUse = if not RunService:IsStudio() then NPCControlService.Config[npcClass] else NPCControlService.Config_Test[npcClass]
+	for _ = 1, configToUse do
+		NPCService:CreateNewNPC(npcClass, position)
+		task.wait(1)
+	end
 end
 
 local function spawnSingleNPC(npcClass: string, position: CFrame?)
@@ -138,19 +123,13 @@ function NPCControlService:SpecialEvent()
 	return true
 end
 
-function NPCControlService:Start()
-	for i, v in pairs(NPCControlService.Config) do
-		spawnNPC(i)
-	end
-end
-
---=================================
-Knit.OnStart():andThen(function()
-	NPCControlService:Start()
-end)
-
 function NPCControlService:KnitStart()
     NPCService = Knit.GetService("NPCService")
+	for i, v in pairs(NPCControlService.Config) do
+		task.spawn(function() 
+			spawnNPC(i)
+		end)
+	end
 end
 
 function NPCControlService:KnitInit()
