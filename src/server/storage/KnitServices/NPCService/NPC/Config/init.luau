@@ -27,4 +27,6 @@ return {
 
 	NPC_CONTAINER_DIR = GAME_WORKSPACE:FindFirstChild("NPC");
 
+
+	DEBUG_ENABLED = false;
 }

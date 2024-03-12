@@ -7,7 +7,6 @@ local NPC = require(script.Parent.Superclass)
 --=========== NPC FUNCTIONS ================
 
 local Helper = script.Parent.Parent.Helper
-local Assets = script.Parent.Parent.Assets
 local Actions = script.Parent.Parent.Actions
 local Combat = require(Actions.Combat)
 local HeadTrackPlayer = require(Actions.HeadTrackPlayer)
@@ -18,24 +17,7 @@ local UpdateIndicator = require(Actions.UpdateIndicator)
 --=========== HELPERS ======================
 
 local determineNextWaypoint = require(Helper.DetermineNextWaypoint)
-local findWaypointGivenToken = require(Helper.FindWaypointWithToken)
-local ragdollOnDeath = require(Helper.RagdollOnDeath)
-local disconnectAllPromises = function(prom: { [any]: Promise })
-    for _, promise: Promise in pairs(prom) do
-        if promise ~= nil and promise:getStatus() == "Started" then
-            promise:cancel()
-            promise = nil
-        end
-    end
-end
-local disconnectAllConnections = function(conn: { [any]: RBXScriptConnection })
-    for _, connection: RBXScriptConnection | nil in pairs(conn) do
-        if connection ~= nil then
-            connection:Disconnect()
-            connection = nil
-        end
-    end
-end
+
 
 --=========== MODULE ================
 
@@ -65,22 +47,59 @@ function Civilian:Suspicious(): ()
         self.npcModel:SetAttribute("playerToLookAt", playerToTrack.Name)
     end
     local charToTrack = playerToTrack.Character :: Types.Character
-    local nextWaypoint = determineNextWaypoint(
-        self.npcModel :: Types.NPCModel,
-        charToTrack.HumanoidRootPart,
-        self.npcModel:GetAttribute("compromised")
+    self.npcModel:SetAttribute("NextWaypointToken",  
+        determineNextWaypoint(
+            self.npcModel :: Types.NPCModel, 
+            charToTrack.HumanoidRootPart, 
+            self.npcModel:GetAttribute("compromised")
+        )
     )
-    self.npcModel:SetAttribute("NextWaypointToken", nextWaypoint)
 end
 
 function Civilian:Alert(): ()
-    self.npcModel:SetAttribute("playerToTrack", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("compromised", true)
+    if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
+        self.promises.movePromise:cancel()
+        task.wait(1)
+    end
+
+
+
+    self.npcModel:SetAttribute("NextWaypointToken",  
+        determineNextWaypoint(
+            self.npcModel :: Types.NPCModel, 
+            nil, 
+            self.npcModel:GetAttribute("compromised")
+        )
+    )
+                
+    task.delay(5, function()
+        if self.npcModel.Humanoid.Health > 0 then
+            -- TODO: Signal: call 911
+            self.npcModel:SetAttribute("playerToLookAt", nil)
+            self.npcModel:SetAttribute("State", "Hostile")
+            -- TODO: Signal: total compromised
+        end
+    end)
 end
 
 function Civilian:Hostile(): ()
-    self.npcModel:SetAttribute("playerToTrack", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    local npcModel = self.npcModel :: Types.NPCModel
+    npcModel:SetAttribute("compromised", true)
+    
+    if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
+        self.promises.movePromise:cancel()
+        task.wait(1)
+    end
+
+    npcModel:SetAttribute("NextWaypointToken", 
+		determineNextWaypoint(
+			npcModel :: Types.NPCModel, 
+			nil, 
+			true
+		)
+	)
+    
 end
 
 return Civilian

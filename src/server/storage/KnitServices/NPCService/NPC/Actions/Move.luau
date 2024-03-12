@@ -4,7 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Promise = require(ReplicatedStorage.Packages.Promise)
 local Types = require(ReplicatedStorage.Shared.Types)
 --============================
-
+local Config = require(script.Parent.Parent.Config)
 local PATHFINDING_PARAM = {
     AgentRadius = 2,
     AgentHeight = 5,
@@ -20,6 +20,7 @@ local PATHFINDING_PARAM = {
         NPCAvoid = math.huge,
     }
 }
+local DEBUG_ENABLED = Config.DEBUG_ENABLED
 --============================
 return function(self, destination: Types.Waypoint | BasePart)
         local path = PathfindingService:CreatePath(PATHFINDING_PARAM)
@@ -35,7 +36,9 @@ return function(self, destination: Types.Waypoint | BasePart)
             path:ComputeAsync(self.npcModel.HumanoidRootPart.Position, destination.Position)
             
             if path.Status ~= Enum.PathStatus.Success then
-                warn("Could not calculate path\nDestination: " .. destination:GetAttribute("WaypointToken"))
+                if DEBUG_ENABLED then 
+                    warn("Could not calculate path\nDestination: " .. destination:GetAttribute("WaypointToken"))
+                end
                 task.wait(0.5)
                 reject()
             end
@@ -54,7 +57,9 @@ return function(self, destination: Types.Waypoint | BasePart)
                         reachedConnection:Disconnect()
                     end
                     -- Call function to re-compute new path
-                    warn("Waypoint blocked, recompute.")
+                    if DEBUG_ENABLED then
+                        warn("Waypoint blocked, recompute.")
+                    end
                     reject()
                 end
             end)
@@ -66,7 +71,9 @@ return function(self, destination: Types.Waypoint | BasePart)
                         local thisWPIndex = nextWaypointIndex 
                         task.wait(5)
                         if thisWPIndex == nextWaypointIndex then
-                            warn("Waypoint timed out, recompute.")
+                            if DEBUG_ENABLED then
+                                warn("Waypoint timed out, recompute.")
+                            end
                             reachedConnection:Disconnect()
                             if blockedConnection ~= nil then
                                 blockedConnection:Disconnect()

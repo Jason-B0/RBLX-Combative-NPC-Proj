@@ -90,7 +90,6 @@ function NPC.new(npcModel: Types.NPCModel, class: string?)
 
     -- set up NPC model
     local newNPC = table.clone(InitialProps)
-    print(class)
     newNPC.npcModel = SetupModel(npcModel, TokenService:GenerateToken("npc"), class) :: Types.NPCModel
     newNPC.npcModel.Parent = CONFIG.NPC_CONTAINER_DIR
 
@@ -132,82 +131,7 @@ function NPC:ChangeState(): ()
         end
         
         stateHandlers[newState]()
-        
-        --[[
-        local nextWaypoint
-        if newState == "Safe" then
-            self.npcModel:SetAttribute("playerToTrack", nil)
-            self.npcModel:SetAttribute("playerToLookAt", nil)
-            
-        elseif newState == "Curious" then
-            self.npcModel:SetAttribute("playerToLookAt", playerToTrack.Name)
-            
-        elseif newState == "Suspicious" then
-            if self.npcModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
-                self.npcModel:SetAttribute("playerToLookAt", playerToTrack.Name)
-            end
-            nextWaypoint = determineNextWaypoint(self.npcModel :: Types.NPCModel, charToTrack.HumanoidRootPart, self.npcModel:GetAttribute("compromised"))
-            
-        elseif newState == "Alert" then
-            self.npcModel:SetAttribute("compromised", true)
-            if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
-                self.promises.movePromise:cancel()
-                task.wait(1)
-            end
-            if npcClass == "Police" or npcClass == "Cartel" then
-                nextWaypoint = determineNextWaypoint(self.npcModel :: Types.NPCModel, charToTrack.HumanoidRootPart, self.npcModel:GetAttribute("compromised"))
-                
-                if self.promises.combatPromise ~= nil and self.promises.combatPromise:getStatus() == "Started" then
-                    self.promises.combatPromise:cancel()
-                end
-                
-                self.promises.combatPromise = Combat(self, playerToTrack)
-                
-                task.delay(2, function()
-                    if self.npcModel.Humanoid.Health > 0 then
-                        self.npcModel:SetAttribute("playerToLookAt", nil)
-                        self.npcModel:SetAttribute("State", "Hostile")
-                    end
-                end)
-            else
-                nextWaypoint = determineNextWaypoint(self.npcModel :: Types.NPCModel, nil, true)
-                
-                task.delay(5, function()
-                    if self.npcModel.Humanoid.Health > 0 then
-                        -- TODO: Signal: call 911
-                        self.npcModel:SetAttribute("playerToLookAt", nil)
-                        self.npcModel:SetAttribute("State", "Hostile")
-                        -- TODO: Signal: total compromised
-                    end
-                end)
-                
-            end
-            
-            
-        elseif newState == "Hostile" then
-            self.npcModel:SetAttribute("compromised", true)
-            if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
-                self.promises.movePromise:cancel()
-                task.wait(1)
-            end
-            if npcClass == "Police" or npcClass == "Cartel" then
-                nextWaypoint = determineNextWaypoint(self.npcModel :: Types.NPCModel, charToTrack.HumanoidRootPart, self.npcModel:GetAttribute("compromised"))
-                
-                if self.promises.combatPromise ~= nil and self.promises.combatPromise:getStatus() ~= "Started" then
-                    self.promises.combatPromise = Combat(self, playerToTrack)
-                end
 
-            else
-                nextWaypoint = determineNextWaypoint(self.npcModel :: Types.NPCModel, nil, true)
-                
-            end
-            
-        end
-         
-        if nextWaypoint then
-            self.npcModel:SetAttribute("NextWaypointToken", nextWaypoint)
-        end
-        ]] 
         resolve()
     end)
         
@@ -215,8 +139,7 @@ end
 
 
 function NPC:Safe(): ()
-    self.npcModel:SetAttribute("playerToTrack", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    error("Cannot be directly called, this is to be implemented by subclasses.")
 end
 
 function NPC:Curious(): ()
@@ -228,40 +151,11 @@ function NPC:Suspicious(): ()
 end
 
 function NPC:Alert(): ()
-    local npcModel = self.npcModel :: Types.NPCModel
-    npcModel:SetAttribute("compromised", true)
-    
-    if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
-        self.promises.movePromise:cancel()
-        task.wait(1)
-    end
-
-    local nextWaypoint = determineNextWaypoint(npcModel :: Types.NPCModel, nil, true)
-
-    task.delay(5, function()
-        if npcModel.Humanoid.Health > 0 then
-            -- TODO: Signal: call 911
-            npcModel:SetAttribute("playerToLookAt", nil)
-            npcModel:SetAttribute("State", "Hostile")
-            npcModel:SetAttribute("NextWaypointToken", nextWaypoint)
-            -- TODO: Signal: total compromised
-        end
-    end)
-    
+    error("Cannot be directly called, this is to be implemented by subclasses.")
 end
 
 function NPC:Hostile(): ()
-    local npcModel = self.npcModel :: Types.NPCModel
-    npcModel:SetAttribute("compromised", true)
-    
-    if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
-        self.promises.movePromise:cancel()
-        task.wait(1)
-    end
-
-    local nextWaypoint = determineNextWaypoint(npcModel :: Types.NPCModel, nil, true)
-    npcModel:SetAttribute("NextWaypointToken", nextWaypoint)
-    
+    error("Cannot be directly called, this is to be implemented by subclasses.")
 end
 
 function NPC:ChangeWaypoint(): ()
