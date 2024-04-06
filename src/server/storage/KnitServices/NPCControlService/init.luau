@@ -25,12 +25,13 @@ local NPCControlService = Knit.CreateService({
 	Config_Test = {
 		["USNavy"] = 15,
 		["CSG1"] = 15,
+		["CSG1-1"] = 15,
 	},
 	
 	Config = {
 		["USNavy"] = 25,
 		["CSG1"] = 25,
-
+		["CSG1-1"] = 15,
 	},
 	
 	NPCEvents = {} :: {Types.NPCEvent},

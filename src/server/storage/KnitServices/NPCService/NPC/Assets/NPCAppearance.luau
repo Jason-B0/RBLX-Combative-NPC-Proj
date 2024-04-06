@@ -72,6 +72,7 @@ AIAppearance.Storage = {
             {7097417786},
             {14290697154},
 
+            {0}
         },
         ["CSG1"] = {           
             -- women hair
@@ -86,6 +87,18 @@ AIAppearance.Storage = {
             {7214601062},
             {7097417786},
             {14290697154},
+
+            {0}
+        },
+
+        ["CSG1-1"] = {           
+            -- hats
+            {14449335522}, -- red hard hat
+            {14449335522, 14449203674}, -- red hart hat w/ earmuffs
+            {14449342634}, -- blue hard hat
+            {14449342634, 14449258172}, -- blue hart hat w/ earmuffs
+            {14449320165}, -- white hard hat
+
         },
         
     },
@@ -121,6 +134,12 @@ AIAppearance.Storage = {
             {13804581697, 9666706628, 14687530501},
             {13804581697, 9666706628, 14687541183},
             {13804581697, 9666706628, 14247672473},
+        },
+
+        ["CSG1-1"] = {
+            {14449174398, 9858567908}, -- Vest, life preserver
+            {14449174398, 9858567908, 13600590203}, -- Vest, life preserver, radio
+            {0}
         }
     },
 
@@ -186,6 +205,10 @@ AIAppearance.Storage = {
             8221029059, -- Coverall officer
         },
 
+        ["CSG1-1"] = {
+            8221038646, -- Coverall enlisted
+            8221029059, -- Coverall officer
+        },
         
     },
 
@@ -244,6 +267,10 @@ AIAppearance.Storage = {
         },
 
         ["CSG1"] = {
+            9369074150, -- Coverall pants
+        },
+
+        ["CSG1-1"] = {
             9369074150, -- Coverall pants
         },
 
