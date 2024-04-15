@@ -1,5 +1,6 @@
 --!strict
 local Types = require(game:GetService("ReplicatedStorage").Shared.Types)
+local Config = require(script.Parent.Parent.Config)
 local Helper = script.Parent.Parent.Helper
 local Assets = script.Parent.Parent.Assets
 --=========== CONFIG ================
@@ -9,7 +10,7 @@ local NPC_DEFAULT_ATTRIBUTES = {
 	DetectionDistance = "DAY_OUTDOOR",
 	Tag = "",
 	Active = true,
-  Class = "Civilian",
+  Class = "X",
   
 	-- Other NPC states
   playerToTrack = "",
@@ -36,7 +37,7 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
     local npcClass = GetNewNPCClass(class)
 
     -- set up NPC appearance
-    local h: HumanoidDescription = Instance.new("HumanoidDescription", npcModel.Humanoid) :: HumanoidDescription
+    local h: HumanoidDescription = Instance.new("HumanoidDescription", npcModel:WaitForChild("Humanoid")) :: HumanoidDescription
     h.Face = NPCAppearance:GetAsset("Face", nil, false) :: number
 
     local bodyColor = NPCAppearance:GetAsset("BodyColor", nil, false) :: Color3
@@ -50,20 +51,21 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
     h.Shirt = NPCAppearance:GetAsset("Shirt", npcClass, true) :: number
     h.Pants = NPCAppearance:GetAsset("Pants", npcClass, true) :: number
     
-	local hairAccessory = NPCAppearance:GetAsset("HairAccessory", npcClass, false) :: {}
-	local faceAccessory = NPCAppearance:GetAsset("FaceAccessory", npcClass, true) :: {}
-	local frontAccessory = NPCAppearance:GetAsset("FrontAccessory", npcClass, true) :: {}
+    local hairAccessory = NPCAppearance:GetAsset("HairAccessory", npcClass, true) :: {}
+    local faceAccessory = NPCAppearance:GetAsset("FaceAccessory", npcClass, true) :: {}
+    local frontAccessory = NPCAppearance:GetAsset("FrontAccessory", npcClass, true) :: {}
 
     h.HairAccessory = convertToString(hairAccessory)
-	h.FaceAccessory = if faceAccessory then convertToString(faceAccessory) else ""
-	h.FrontAccessory = if frontAccessory then convertToString(frontAccessory) else ""
+    h.FaceAccessory = if faceAccessory then convertToString(faceAccessory) else ""
+    h.FrontAccessory = if frontAccessory then convertToString(frontAccessory) else ""
 
-    npcModel.Humanoid:ApplyDescriptionReset(h, Enum.AssetTypeVerification.Default)
+	  npcModel.Parent = Config.NPC_CONTAINER_DIR
+    npcModel:FindFirstChildOfClass("Humanoid"):ApplyDescriptionReset(h, Enum.AssetTypeVerification.Default)
     npcModel.HumanoidRootPart:SetNetworkOwner(nil)
 
     -- set up NPC attributes
     for attribute, defaultValue in pairs(NPC_DEFAULT_ATTRIBUTES) do
-      npcModel:SetAttribute(attribute, defaultValue)
+      	npcModel:SetAttribute(attribute, defaultValue)
     end
 
     -- set up NPC pre-determined attributes

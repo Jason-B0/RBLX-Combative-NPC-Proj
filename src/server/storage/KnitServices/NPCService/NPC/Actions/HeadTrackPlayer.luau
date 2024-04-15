@@ -12,10 +12,10 @@ local DETECTION_DISTANCE = {
 }
 
 return function(self, player: Player)
-	local npcHead = self.NPCModel.Head :: BasePart
-	local npcNeck = self.NPCModel.Torso.Neck :: Motor6D
-	local npcHrp = self.NPCModel.HumanoidRootPart :: BasePart
-	local stateIndicator = self.NPCModel.StateBillboard.StateIndicator :: ImageLabel
+	local npcHead = self.npcModel.Head :: BasePart
+	local npcNeck = self.npcModel.Torso.Neck :: Motor6D
+	local npcHrp = self.npcModel.HumanoidRootPart :: BasePart
+	local stateIndicator = self.npcModel.StateBillboard.StateIndicator :: ImageLabel
 	local npcNeckDefaultC0 = CFrame.new(0, 1, 0, -1, 0, 0, 0, 0, 1, 0, 1, -0)
 	
 	local function lookAt(neckC0: CFrame)
@@ -35,7 +35,7 @@ return function(self, player: Player)
 					local dist = (npcHead.CFrame.Position - plrHead.CFrame.Position).Magnitude
 					local diff = npcHead.CFrame.Y - plrHead.CFrame.Y
 
-					if dist > DETECTION_DISTANCE[self.NPCModel:GetAttribute("DetectionDistance")] then
+					if dist > DETECTION_DISTANCE[self.npcModel:GetAttribute("DetectionDistance")] then
 						break
 					end
 					

@@ -3,5 +3,6 @@
 		"trailing-space",
 		"undefined-type",
 		1017
-	]
+	],
+	"stylua.targetReleaseVersion": "latest"
 }

@@ -1,3 +1,4 @@
+--!strict
 --[[
 	This service strictly tracks the status of all NPCs, creating them and assigning them tags, and
 	assigning paths etc.
@@ -20,14 +21,16 @@ local Promise = require(ReplicatedStorage.Packages.Promise)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local Types = require(ReplicatedStorage.Shared.Types)
 
-local NPCObject = require(script.NPC)
+local NPCClassFolder = script.NPC.Classes
+local NPCClasses = {}
+
+local CONFIG = require(script.NPC.Config)
 --=================================
 local NPCService = Knit.CreateService({
     Name = "NPCService",
     Client = {},
     
     TAG_NAME = "NPC",
-    NPC_FOLDER = workspace.NPC,
     
     NPCs = {} :: {[string]: Types.NPCModel},
     AggrovateSignal = Signal.new(),
@@ -35,7 +38,7 @@ local NPCService = Knit.CreateService({
 })
 local TokenService
 --=================================
-local Asset = ServerStorage.Asset
+local Assets = ServerStorage.Assets
 
 -- Helper function to create an NPCAvoid part
 local function createNPCAvoidPart(size: Vector3)
@@ -54,7 +57,7 @@ local function createNPCAvoidPart(size: Vector3)
     newPart.CanCollide = false
     newPart.Color = Color3.fromRGB(225, 225, 0)
     newPart.Transparency = RunService:IsStudio() and 0.8 or 1
-    newPart.Parent = workspace.GAME_WORKSPACE.NPCAvoid:FindFirstChildOfClass("Folder")
+    newPart.Parent = CONFIG.NPC_AVOID_DIR:FindFirstChildOfClass("Folder")
 
     return newPart
 end
@@ -88,12 +91,17 @@ end
 
 -- NPC creation
 function NPCService:CreateNewNPC(class: string?, position: CFrame?)
-    local newNPCModel = Asset.NPC:Clone()
+    print(class, position)
+    local newNPCModel = Assets:FindFirstChild("NPC"):Clone() :: Types.NPCModel
     newNPCModel.Parent = self.NPC_FOLDER
-    local newNPCObj = NPCObject.new(newNPCModel, class)
-    newNPCObj:Active(position)
+    local newNPC = NPCClasses[class].new(
+        newNPCModel, 
+        class
+    ) 
+
+    newNPC:Active(position)
     
-    return newNPCObj
+    return newNPC
 end
 
 -- Returns a copy of NPC list
@@ -117,8 +125,9 @@ function NPCService:KnitStart()
     end
 
 	-- set up all waypoint to be tagged with a token
-	for _, waypoint: Types.Waypoint in pairs(workspace.NPC_Waypoints:GetDescendants()) do
+	for _, waypoint: Types.Waypoint | Instance in pairs(CONFIG.NPC_WAYPOINT_DIR:GetDescendants()) do
 		if waypoint:IsA("BasePart") then
+            waypoint.Transparency = 1
 			waypoint:SetAttribute("WaypointToken", TokenService:GenerateToken("wp"))
 		end
 	end 
@@ -131,33 +140,36 @@ function NPCService:KnitStart()
 end
 
 function NPCService:KnitInit()
-    if workspace.GAME_WORKSPACE:FindFirstChild("NPCAvoid") then
-        for _, v: BasePart | Model in pairs(workspace.GAME_WORKSPACE.NPCAvoid:GetChildren()) do
-            local size
-            if v:IsA("Model") then
-                if v.PrimaryPart == nil then
-                    size = v:GetExtentsSize()
-                else
-                    size = v.PrimaryPart.Size
-                end
-            elseif v:IsA("BasePart") then
-                size = v.Size
-            end
-            
-            if size == nil then continue end
-            
-            local newPart = createNPCAvoidPart(size)
-            newPart:PivotTo(v:GetPivot())
-            
-            local pathfindingModifier = Instance.new("PathfindingModifier")
-            pathfindingModifier.Name = "NPCAvoid"
-            pathfindingModifier.Label = "NPCAvoid"
-            pathfindingModifier.PassThrough = false
-            pathfindingModifier.Parent = newPart
-        
+    for _, v: ModuleScript in pairs(NPCClassFolder:GetChildren()) do
+        if v:IsA("ModuleScript") then
+            NPCClasses[v.Name] = require(v)
         end
     end
+    for _, v: BasePart | Model in pairs(CONFIG.NPC_AVOID_DIR:GetChildren()) do
+        local size
+        if v:IsA("Model") then
+            if v.PrimaryPart == nil then
+                size = v:GetExtentsSize()
+            else
+                size = v.PrimaryPart.Size
+            end
+        elseif v:IsA("BasePart") then
+            size = v.Size
+        end
+        
+        if size == nil then continue end
+        
+        local newPart = createNPCAvoidPart(size)
+        newPart:PivotTo(v:GetPivot())
+        
+        local pathfindingModifier = Instance.new("PathfindingModifier")
+        pathfindingModifier.Name = "NPCAvoid"
+        pathfindingModifier.Label = "NPCAvoid"
+        pathfindingModifier.PassThrough = false
+        pathfindingModifier.Parent = newPart
     
+    end
+
 end
 
 return NPCService

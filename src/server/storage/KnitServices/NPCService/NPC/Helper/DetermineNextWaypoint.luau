@@ -6,9 +6,10 @@ local TokenService = task.spawn(function()
 	return Knit.GetService("TokenService")
 end)
 
-local WAYPOINT_FOLDER = workspace.NPC_Waypoints :: Folder
-local TRACKING_FOLDER = WAYPOINT_FOLDER:FindFirstChild("TrackingFolder") :: Folder
-local EVADE_FOLDER = WAYPOINT_FOLDER:FindFirstChild("EvadeWaypoints") :: Folder
+local Config = require(script.Parent.Parent.Config)
+local WAYPOINT_FOLDER = Config.NPC_WAYPOINT_DIR
+local TRACKING_FOLDER = Config.NPC_WAYPOINT_TRACK_DIR
+local EVADE_FOLDER = Config.NPC_WAYPOINT_EVADE_DIR
 
 -- Function that determines the next waypoint for an NPC to go to
 -- Returns the token of the waypoint.
@@ -48,60 +49,26 @@ return function(npc: Types.NPCModel, targetPart: BasePart?, isEvading: boolean |
             continue
         end
 
+        if possibleWaypoint:GetAttribute("WaypointToken") == npc:GetAttribute("NextWaypointToken") then
+            continue
+        end
+
         -- if NPC can access the waypoint it,
         -- then return it
-        if
-            npcClass == "Civilian"
-            and (possibleWaypoint:GetAttribute("CanPublicAccess") == true)
-        then
-            waypoint = possibleWaypoint :: Types.Waypoint
-        elseif
-            npcClass == "Police"
-            and (
-                possibleWaypoint:GetAttribute("CanPoliceAccess") == true
-                or possibleWaypoint:GetAttribute("CanPublicAccess") == true
-                or possibleWaypoint:GetAttribute("CanDockAdminAccess") == true
-                or possibleWaypoint:GetAttribute("CanDockWorkerAccess") == true
-                or possibleWaypoint:GetAttribute("CanCartelAccess") == true
-                or possibleWaypoint:GetAttribute("CanConstructionWorkerAccess") == true
-            )
-        then
-            waypoint = possibleWaypoint :: Types.Waypoint
-        elseif
-            npcClass == "DockWorker"
-            and (
-                possibleWaypoint:GetAttribute("CanDockWorkerAccess") == true
-                or possibleWaypoint:GetAttribute("CanPublicAccess") == true
-            )
-        then
-            waypoint = possibleWaypoint :: Types.Waypoint
-        elseif
-            npcClass == "DockAdmin"
-            and (
-                possibleWaypoint:GetAttribute("CanDockAdminAccess") == true
-                or possibleWaypoint:GetAttribute("CanDockWorkerAccess") == true
-                or possibleWaypoint:GetAttribute("CanPublicAccess") == true
-            )
-        then
-            waypoint = possibleWaypoint :: Types.Waypoint
-        elseif
-            npcClass == "Cartel"
-            and (
-                possibleWaypoint:GetAttribute("CanCartelAccess") == true
-                or possibleWaypoint:GetAttribute("CanDockWorkerAccess") == true
-                or possibleWaypoint:GetAttribute("CanPublicAccess") == true
-            )
-        then
-            waypoint = possibleWaypoint :: Types.Waypoint
-        elseif
-            npcClass == "ConstructionWorker"
-            and (
-                possibleWaypoint:GetAttribute("CanConstructionWorkerAccess") == true
-                or possibleWaypoint:GetAttribute("CanPublicAccess") == true
-            )
-        then
-            waypoint = possibleWaypoint :: Types.Waypoint
+        local canAccessList = {}
+        local attributeString = possibleWaypoint:GetAttribute("AccessibleNPCClasses")
+        
+        for word in string.gmatch(attributeString, '([^,]+)') do
+            table.insert(canAccessList, word)
+        end        
+        
+        for _, class in pairs(canAccessList) do
+            if class == npcClass then
+                waypoint = possibleWaypoint :: Types.Waypoint
+                break
+            end
         end
+
         task.wait()
     end
 

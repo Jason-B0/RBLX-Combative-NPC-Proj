@@ -19,13 +19,13 @@ function ProximityPromptController:KnitStart()
     -- proximity prompt
     ProximityPromptService.PromptButtonHoldBegan:Connect(function(prompt, player)
         if prompt.Name == "NPCPrompt" then
-            ClientNPCController:SetOperatioNState("Illegal Action")
+            ClientNPCController:SetOperationState("Illegal Action")
         end
     end)
 
     ProximityPromptService.PromptButtonHoldEnded:Connect(function(prompt, player)
         if prompt.Name == "NPCPrompt" then
-            ClientNPCController:SetOperatioNState("Safe")
+            ClientNPCController:SetOperationState("Safe")
         end
     end)
 	

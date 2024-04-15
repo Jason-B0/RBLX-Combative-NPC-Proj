@@ -25,7 +25,12 @@
     "ServerStorage": {
       "$ignoreUnknownInstances": true,
       "$className": "ServerStorage",
-      "$path": "src/server/storage"
+      "$path": "src/server/storage",
+
+      "Assets": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": true
+      }
     },
     
     "StarterPlayer": {
@@ -54,30 +59,41 @@
         "FilteringEnabled": true
       },
       
-      "NPC_Waypoints": {
-        "$className": "Folder",
-        "$ignoreUnknownInstances": true,
-        
-        "EvadeWaypoints": {
-          "$className": "Folder",
-          "$ignoreUnknownInstances": true
-        }
-      },
-      
-      "NPC": {
-        "$className": "Folder"
-      },
-      
       "GAME_WORKSPACE": {
         "$className": "Folder",
-        "$ignoreUnknownInstances": true,
+
+        "Loadout_Workspace": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": true
+        },
+
         "InvisWalls": {
           "$className": "Folder",
           "$ignoreUnknownInstances": true
         },
+
         "NPCAvoid": {
           "$className": "Folder",
           "$ignoreUnknownInstances": true
+        },
+
+        "NPC_Waypoints": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": true,
+          
+          "EvadeWaypoints": {
+            "$className": "Folder",
+            "$ignoreUnknownInstances": true
+          },
+
+          "TrackingFolder": {
+            "$className": "Folder",
+            "$ignoreUnknownInstances": true
+          }
+        },
+        
+        "NPC": {
+          "$className": "Folder"
         }
       }
         

@@ -72,14 +72,14 @@ end
 
 return function(self: Types.NPC, player: Player)
 	
-	local npcHead = self.NPCModel.Head :: BasePart
-	local npcHumanoid = self.NPCModel.Humanoid :: Humanoid
-	local npcNeck = self.NPCModel.Torso.Neck :: Motor6D
-	local npcTorso = self.NPCModel.Torso :: BasePart
-	local npcHrp = self.NPCModel.HumanoidRootPart :: BasePart
+	local npcHead = self.npcModel.Head :: BasePart
+	local npcHumanoid = self.npcModel.Humanoid :: Humanoid
+	local npcNeck = self.npcModel.Torso.Neck :: Motor6D
+	local npcTorso = self.npcModel.Torso :: BasePart
+	local npcHrp = self.npcModel.HumanoidRootPart :: BasePart
 	
 	local weaponTool = equipWeapon("CZ75") :: Types.WeaponTool
-	weaponTool.Parent = self.NPCModel
+	weaponTool.Parent = self.npcModel
 	local gunModel = weaponTool.Gun :: Model
 	local gunHandle = gunModel.Handle or gunModel.Grip :: BasePart
 	task.wait(.5)
@@ -105,7 +105,7 @@ return function(self: Types.NPC, player: Player)
 					)
 				
 				local raycastParams = RaycastParams.new()
-				raycastParams.FilterDescendantsInstances = {self.NPCModel}
+				raycastParams.FilterDescendantsInstances = {self.npcModel}
 				raycastParams.FilterType = Enum.RaycastFilterType.Exclude
 				raycastParams.IgnoreWater = true
 				
@@ -129,7 +129,7 @@ return function(self: Types.NPC, player: Player)
 					
 					-- shoot
 					Event.ServerBullet:FireAllClients(
-						self.NPCModel, 
+						self.npcModel, 
 						gunHandle.Muzzle.WorldCFrame.Position,
 						(bulletTravelDir - gunHandle.Muzzle.WorldCFrame.Position).Unit,
 						require(weaponTool.Settings),
@@ -140,9 +140,9 @@ return function(self: Types.NPC, player: Player)
 					if foundHum == true and Players:GetPlayerFromCharacter(humanoid.Parent) then
 						if humanoid.Health == 0 then 
 							task.delay(2, function()
-								self.NPCModel:SetAttribute("playerToTrack", nil)
-								self.NPCModel:SetAttribute("State", "Safe")
-								self.NPCModel:SetAttribute("compromised", false)
+								self.npcModel:SetAttribute("playerToTrack", nil)
+								self.npcModel:SetAttribute("State", "Safe")
+								self.npcModel:SetAttribute("compromised", false)
 							end)
 							break 
 						end
