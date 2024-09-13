@@ -72,7 +72,7 @@ end
 function NPCService:AggrovateNPC(player: Player, npcTag: string, newState: string)
     local npc = self.NPCs[npcTag]
     if npc then
-        npc:SetAttribute("playerToTrack", player.Name or nil)
+        npc:SetAttribute("aggroPlayer", player.Name or nil)
         npc:SetAttribute("State", newState)
     end
 end

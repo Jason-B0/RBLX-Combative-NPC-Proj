@@ -16,7 +16,7 @@ end
 function CSG1NPC:ChangeState(): ()
     local npcModel = self.npcModel :: Types.NPCModel
     local npcClass = npcModel:GetAttribute("Class") :: string
-    local playerToTrack = if npcModel:GetAttribute("playerToTrack") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("playerToTrack")) else nil :: Player | nil
+    local playerToTrack = if npcModel:GetAttribute("aggroPlayer") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("aggroPlayer")) else nil :: Player | nil
     local charToTrack = if playerToTrack then playerToTrack.Character else nil :: Types.Character
     local newState = npcModel:GetAttribute("State")
     self:UpdateIndicator(newState)
@@ -51,26 +51,26 @@ function CSG1NPC:ChangeState(): ()
 end
 
 function CSG1NPC:Safe(): ()
-    self.npcModel:SetAttribute("playerToTrack", nil)
+    self.npcModel:SetAttribute("aggroPlayer", nil)
     self.npcModel:SetAttribute("playerToLookAt", nil)
 end
 
 function CSG1NPC:Curious(): ()
-    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("playerToTrack"))
+    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("aggroPlayer"))
 end
 
 function CSG1NPC:Suspicious(): ()
-    self.npcModel:SetAttribute("playerToTrack", nil)
+    self.npcModel:SetAttribute("aggroPlayer", nil)
     self.npcModel:SetAttribute("playerToLookAt", nil)
 end
 
 function CSG1NPC:Alert(): ()
-    self.npcModel:SetAttribute("playerToTrack", nil)
+    self.npcModel:SetAttribute("aggroPlayer", nil)
     self.npcModel:SetAttribute("playerToLookAt", nil)
 end
 
 function CSG1NPC:Hostile(): ()
-    self.npcModel:SetAttribute("playerToTrack", nil)
+    self.npcModel:SetAttribute("aggroPlayer", nil)
     self.npcModel:SetAttribute("playerToLookAt", nil)
 end
 

@@ -22,21 +22,20 @@ local determineNextWaypoint = require(Helper.DetermineNextWaypoint)
 
 --=========== MODULE ================
 
-local Civilian = {}
-Civilian.__index = Civilian
-setmetatable(Civilian, NPC)
+local BadGuy = {}
+BadGuy.__index = BadGuy
+setmetatable(BadGuy, NPC)
 
-function Civilian.new(npcModel: Types.NPCModel, class: string?): any
-	local newNPC = NPC.new(npcModel, "Civilian") :: Types.NPC
+function BadGuy.new(npcModel: Types.NPCModel, class: string?): any
+	local newNPC = NPC.new(npcModel, "BadGuy") :: Types.NPC
 	
-	return setmetatable(newNPC, Civilian)
+	return setmetatable(newNPC, BadGuy)
 end
 
-function Civilian:ChangeState(): ()
+function BadGuy:ChangeState(): ()
     local npcModel = self.npcModel :: Types.NPCModel
     local npcClass = npcModel:GetAttribute("Class") :: string
-    local playerToTrack = if npcModel:GetAttribute("aggroPlayer") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("aggroPlayer")) else nil :: Player | nil
-    local charToTrack = if playerToTrack then playerToTrack.Character else nil :: Types.Character
+    local aggroPlayer = if npcModel:GetAttribute("aggroPlayer") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("aggroPlayer")) else nil :: Player | nil
     local newState = npcModel:GetAttribute("State")
     self:UpdateIndicator(newState)
     
@@ -62,23 +61,23 @@ function Civilian:ChangeState(): ()
             return
         end
         
-        stateHandlers[newState](self)
+        stateHandlers[newState](aggroPlayer)
 
         resolve()
     end)
         
 end
 
-function Civilian:Safe(): ()
+function BadGuy:Safe(): ()
     self.npcModel:SetAttribute("aggroPlayer", nil)
     self.npcModel:SetAttribute("playerToLookAt", nil)
 end
 
-function Civilian:Curious(): ()
-    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("aggroPlayer"))
+function BadGuy:Curious(aggroPlayer: Player): ()
+    self.npcModel:SetAttribute("playerToLookAt", aggroPlayer)
 end
 
-function Civilian:Suspicious(): ()
+function BadGuy:Suspicious(aggroPlayer: Player): ()
     local playerToTrack =
         Players:FindFirstChild(self.npcModel:GetAttribute("aggroPlayer")) :: Player
     if self.npcModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
@@ -94,32 +93,29 @@ function Civilian:Suspicious(): ()
     )
 end
 
-function Civilian:Alert(): ()
-    self.npcModel:SetAttribute("compromised", true)
+function BadGuy:Alert(): ()
+    self.NPCModel:SetAttribute("compromised", true)
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
         self.promises.movePromise:cancel()
         task.wait(1)
     end
-
-    self.npcModel:SetAttribute("NextWaypointToken",  
-        determineNextWaypoint(
-            self.npcModel :: Types.NPCModel, 
-            nil, 
-            self.npcModel:GetAttribute("compromised")
-        )
-    )
-                
-    task.delay(5, function()
-        if self.npcModel.Humanoid.Health > 0 then
-            -- TODO: Signal: call 911
-            self.npcModel:SetAttribute("playerToLookAt", nil)
-            self.npcModel:SetAttribute("State", "Hostile")
-            -- TODO: Signal: total compromised
+    local nextWaypoint = determineNextWaypoint(self.NPCModel, self.charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
+        
+    if self.promises.combatPromise ~= nil and self.promises.combatPromise:getStatus() == "Started" then
+        self.promises.combatPromise:cancel()
+    end
+    
+    self.promises.combatPromise = Combat(self, self.playerToTrack)
+    
+    task.delay(2, function()
+        if self.NPCModel.Humanoid.Health > 0 then
+            self.NPCModel:SetAttribute("playerToLookAt", nil)
+            self.NPCModel:SetAttribute("State", "Hostile")
         end
     end)
 end
 
-function Civilian:Hostile(): ()
+function BadGuy:Hostile(): ()
     local npcModel = self.npcModel :: Types.NPCModel
     npcModel:SetAttribute("compromised", true)
     
@@ -138,4 +134,4 @@ function Civilian:Hostile(): ()
     
 end
 
-return Civilian
+return BadGuy

@@ -140,7 +140,7 @@ return function(self: Types.NPC, player: Player)
 					if foundHum == true and Players:GetPlayerFromCharacter(humanoid.Parent) then
 						if humanoid.Health == 0 then 
 							task.delay(2, function()
-								self.npcModel:SetAttribute("playerToTrack", nil)
+								self.npcModel:SetAttribute("aggroPlayer", nil)
 								self.npcModel:SetAttribute("State", "Safe")
 								self.npcModel:SetAttribute("compromised", false)
 							end)

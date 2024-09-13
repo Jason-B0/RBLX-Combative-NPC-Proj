@@ -19,7 +19,7 @@ end
 function USNavyNPC:ChangeState(): ()
     local npcModel = self.npcModel :: Types.NPCModel
     local npcClass = npcModel:GetAttribute("Class") :: string
-    local playerToTrack = if npcModel:GetAttribute("playerToTrack") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("playerToTrack")) else nil :: Player | nil
+    local playerToTrack = if npcModel:GetAttribute("aggroPlayer") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("aggroPlayer")) else nil :: Player | nil
     local charToTrack = if playerToTrack then playerToTrack.Character else nil :: Types.Character
     local newState = npcModel:GetAttribute("State")
     self:UpdateIndicator(newState)
@@ -54,26 +54,26 @@ function USNavyNPC:ChangeState(): ()
 end
 
 function USNavyNPC:Safe(): ()
-    self.npcModel:SetAttribute("playerToTrack", nil)
+    self.npcModel:SetAttribute("aggroPlayer", nil)
     self.npcModel:SetAttribute("playerToLookAt", nil)
 end
 
 function USNavyNPC:Curious(): ()
-    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("playerToTrack"))
+    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("aggroPlayer"))
 end
 
 function USNavyNPC:Suspicious(): ()
-    self.npcModel:SetAttribute("playerToTrack", nil)
+    self.npcModel:SetAttribute("aggroPlayer", nil)
     self.npcModel:SetAttribute("playerToLookAt", nil)
 end
 
 function USNavyNPC:Alert(): ()
-    self.npcModel:SetAttribute("playerToTrack", nil)
+    self.npcModel:SetAttribute("aggroPlayer", nil)
     self.npcModel:SetAttribute("playerToLookAt", nil)
 end
 
 function USNavyNPC:Hostile(): ()
-    self.npcModel:SetAttribute("playerToTrack", nil)
+    self.npcModel:SetAttribute("aggroPlayer", nil)
     self.npcModel:SetAttribute("playerToLookAt", nil)
 end
 
