@@ -64,7 +64,7 @@ local NPC = {}
 NPC.__index = NPC
 
 local InitialProps = {
-    npcModel = nil :: Types.NPCModel,
+    npcModel = nil :: Types.NPCModel | Model | any,
     npcClass = "" :: string,
     thisNPCFinishedMoving = Signal.new(),
     playerCurrentlyBeingTracked = nil :: Player | nil,
@@ -99,44 +99,13 @@ function NPC.new(npcModel: Types.NPCModel, class: string?)
     return setmetatable(newNPC, NPC)
 end
 
-function NPC:ChangeState(): ()
-    local npcModel = self.npcModel :: Types.NPCModel
-    local npcClass = npcModel:GetAttribute("Class") :: string
-    local playerToTrack = if npcModel:GetAttribute("playerToTrack") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("playerToTrack")) else nil :: Player | nil
-    local charToTrack = if playerToTrack then playerToTrack.Character else nil :: Types.Character
-    local newState = npcModel:GetAttribute("State")
-
-    UpdateIndicator(self, newState)
-    
-    if self.promises.statePromise then
-        self.promises.statePromise:cancel()
-    end
-    
-    local stateHandlers = {
-        ["Safe"] = self:Safe(),
-        ["Curious"] = self:Curious(),
-        ["Suspicious"] = self:Suspicious(),
-        ["Alert"] = self:Alert(),
-        ["Hostile"] = self:Hostile(),
-    }
-    
-    self.promises.statePromise = Promise.new(function(resolve, reject, onCancel)
-        
-        if onCancel(function()
-            if self.promises.statePromise then
-                self.promises.statePromise:cancel()
-            end
-        end) then
-            return
-        end
-        
-        stateHandlers[newState]()
-
-        resolve()
-    end)
-        
+function NPC:UpdateIndicator(state: string?): ()
+    UpdateIndicator(self, if state ~= nil then state else "Safe")
 end
 
+function NPC:ChangeState(): ()
+    error("Cannot be directly called, this is to be implemented by subclasses.")
+end
 
 function NPC:Safe(): ()
     error("Cannot be directly called, this is to be implemented by subclasses.")
@@ -240,11 +209,11 @@ end
 function NPC:Died(): ()
     ragdollOnDeath(self.npcModel)
     disconnectAllPromises(self.promises)
-    UpdateIndicator(self, "Safe")
+    self:UpdateIndicator("Safe")
 end
 
 function NPC:Destroy(): ()
-    UpdateIndicator(self, "Safe")
+    self:UpdateIndicator("Safe")
     disconnectAllPromises(self.promises)
     CollectionService:RemoveTag(self.npcModel :: Types.NPCModel, TAG_NAME)
     if not self.npcModel:IsDescendantOf(workspace) then
@@ -270,7 +239,7 @@ function NPC:Active(initPosition: CFrame?): ()
             self:Destroy()
         end
     end)
-    
+
     -- initialize move
     task.defer(function()
         local nextWaypointToken = determineNextWaypoint(self.npcModel, nil, self.npcModel:GetAttribute("compromised"))
