@@ -1,9 +1,9 @@
 local Knit = require(game:GetService('ReplicatedStorage').Packages.Knit)
 local ProximityPromptService = game:GetService('ProximityPromptService')
 
-local ProximityPromptController = Knit.CreateController {
+local ProximityPromptController = Knit.CreateController( {
 	Name = 'ProximityPromptController';
-}
+})
 
 local ClientNPCController
 
@@ -14,7 +14,7 @@ function ProximityPromptController:KnitInit()
 end
 
 function ProximityPromptController:KnitStart()
-	ClientNPCController = Knit.GetController(ClientNPCController)
+	ClientNPCController = Knit.GetController("ClientNPCController")
 
     -- proximity prompt
     ProximityPromptService.PromptButtonHoldBegan:Connect(function(prompt, player)

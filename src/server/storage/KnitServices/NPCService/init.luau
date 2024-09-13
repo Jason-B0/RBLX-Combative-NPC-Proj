@@ -38,7 +38,7 @@ local NPCService = Knit.CreateService({
 })
 local TokenService
 --=================================
-local Assets = ServerStorage.Assets
+local Asset = ServerStorage.Asset
 
 -- Helper function to create an NPCAvoid part
 local function createNPCAvoidPart(size: Vector3)
@@ -91,8 +91,7 @@ end
 
 -- NPC creation
 function NPCService:CreateNewNPC(class: string?, position: CFrame?)
-    print(class, position)
-    local newNPCModel = Assets:FindFirstChild("NPC"):Clone() :: Types.NPCModel
+    local newNPCModel = Asset:FindFirstChild("NPC"):Clone() :: Types.NPCModel
     newNPCModel.Parent = self.NPC_FOLDER
     local newNPC = NPCClasses[class].new(
         newNPCModel, 
