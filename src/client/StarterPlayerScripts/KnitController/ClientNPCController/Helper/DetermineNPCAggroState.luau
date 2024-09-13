@@ -6,8 +6,8 @@ local LocalPlayer = game:GetService("Players").LocalPlayer
 return function(): string
 	local locationState = LocalPlayer:GetAttribute("locationState")
     local operationState = LocalPlayer:GetAttribute("operationState")
-    local npcAggroState = ""
-    
+    local npcAggroState = nil
+
     if locationState == "Safe" then
         
         if operationState == "Safe" then
@@ -84,6 +84,12 @@ return function(): string
             
         end
         
+    end
+    
+    -- Default to safe if no state is found
+    if npcAggroState == nil then
+        warn("npcAggroState is nil")
+        return "Safe"
     end
     
     return npcAggroState

@@ -53,17 +53,16 @@ return function(npc: Types.NPCModel, targetPart: BasePart?, isEvading: boolean |
             continue
         end
 
-        -- if NPC can access the waypoint it,
-        -- then return it
+        -- if NPC can access the waypoint, then try to select it
         local canAccessList = {}
         local attributeString = possibleWaypoint:GetAttribute("AccessibleNPCClasses")
-        
+ 
         for word in string.gmatch(attributeString, '([^,]+)') do
             table.insert(canAccessList, word)
-        end        
+        end
         
-        for _, class in pairs(canAccessList) do
-            if class == npcClass then
+        for _, class:string in pairs(canAccessList) do
+            if class == npcClass or string.lower(class) == "everyone" then
                 waypoint = possibleWaypoint :: Types.Waypoint
                 break
             end
