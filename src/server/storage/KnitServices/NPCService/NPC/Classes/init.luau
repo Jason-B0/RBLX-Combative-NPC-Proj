@@ -1,7 +1,6 @@
 --!strict
 
 -- NPC Abstract class
-
 local CollectionService = game:GetService("CollectionService")
 local PathfindingService = game:GetService("PathfindingService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,7 +12,69 @@ local Promise = require(ReplicatedStorage.Packages.Promise)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local Types = require(ReplicatedStorage.Shared.Types)
 
-local System = script.Parent.Parent
+type Signal<T...> = typeof(Signal.new())
+
+export type NPCClass = {
+    new: (npcModel: NPCModel, class: string?) -> NPCClass,
+    
+    npcModel: NPCModel,
+    npcClass: string,
+    npcGender: string,
+    
+    thisNPCFinishedMoving: Signal<any>,
+    playerCurrentlyBeingTracked: Player,
+    currentTask: Types.NPCEvent?,
+    promises: { [any]: Promise },
+    connections: { [any]: RBXScriptConnection },
+    
+    __index: NPCClass,
+
+    Active: () -> (),
+
+    ChangeState: () -> (),
+
+    Safe: () -> (),
+    Curious: () -> (),
+    Suspicious: () -> (),
+    Alert: () -> (),
+    Hostile: () -> (),
+    ChangeWaypoint: () -> (),
+    ChangePlayerToLookAt: () -> (),
+    
+}
+
+export type NPCModel = (Model & {
+    HumanoidRootPart: BasePart,
+    Humanoid: Humanoid & {
+        HumanoidDescription: HumanoidDescription,
+        Animator: Animator,
+    },
+    Torso: BasePart & {
+        Neck: Motor6D,
+        ["Left Shoulder"]: Motor6D,
+        ["Right Shoulder"]: Motor6D,
+        ["Left Hip"]: Motor6D,
+        ["Right Hip"]: Motor6D,
+    },
+    Head: BasePart,
+    StateBillboard: BillboardGui & {
+        StateIndicator: ImageLabel,
+    },
+    Weapon: Types.WeaponTool?,
+
+    -- Attributes
+    Class: string,
+    NextWaypointToken: string,
+
+    -- Variables
+    playerToTrack: string,
+    State: "Safe" | "Curious" | "Suspicious" | "Alert" | "Hostile",
+}) | Instance
+
+type Promise = typeof(Promise.new(function() end))
+
+
+local System = script.Parent
 local TAG_NAME = "NPC"
 local CONFIG = require(System.Config)
 
@@ -23,9 +84,6 @@ task.spawn(function()
         TokenService = Knit.GetService("TokenService")
     end)
 end)
-
-type Promise = typeof(Promise.new(function() end))
-
 
 --=========== NPC FUNCTIONS ================
 local Helper = System.Helper
@@ -59,38 +117,43 @@ local disconnectAllConnections = function(conn: {[any]: RBXScriptConnection})
     end
 end
 
+local function setCollisionGroup(_npcModel: NPCModel, _tagName: string)
+    for _, v in pairs(_npcModel:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CollisionGroup = _tagName
+        end
+    end
+end
+
+local function determineGender() : string
+    local random = math.random(1, 2)
+    return if random == 1 then "Male" else "Female"
+end
+
 --=========== NPC CLASS ================
 local NPC = {}
 NPC.__index = NPC
 
 local InitialProps = {
-    npcModel = nil :: Types.NPCModel,
+    npcModel = nil :: NPCModel | any,
     npcClass = "" :: string,
     thisNPCFinishedMoving = Signal.new(),
     playerCurrentlyBeingTracked = nil :: Player | nil,
-    currentTask = nil :: Types.NPCEvent?,
     
     promises = {} :: {[any]: Promise},
     
     connections = {} :: {[any]: RBXScriptConnection},
 }
 
-function NPC.new(npcModel: Types.NPCModel, class: string?)
-
-    local function setCollisionGroup(_npcModel: Types.NPCModel, _tagName: string)
-        for _, v in pairs(_npcModel:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.CollisionGroup = _tagName
-            end
-        end
-    end
-
+function NPC.new(npcModel: NPCModel, class: string?)
     Knit.OnStart():awaitStatus()
     TokenService = Knit.GetService("TokenService")
 
     -- set up NPC model
     local newNPC = table.clone(InitialProps)
-    newNPC.npcModel = SetupModel(npcModel, TokenService:GenerateToken("npc"), class) :: Types.NPCModel
+    local token = TokenService:GenerateToken("npc")
+    local gender = determineGender()
+    newNPC.npcModel = SetupModel(npcModel, token, class, gender) :: NPCModel
     newNPC.npcModel.Parent = CONFIG.NPC_CONTAINER_DIR
 
     setCollisionGroup(newNPC.npcModel, "NPC")
@@ -100,10 +163,7 @@ function NPC.new(npcModel: Types.NPCModel, class: string?)
 end
 
 function NPC:ChangeState(): ()
-    local npcModel = self.npcModel :: Types.NPCModel
-    local npcClass = npcModel:GetAttribute("Class") :: string
-    local playerToTrack = if npcModel:GetAttribute("playerToTrack") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("playerToTrack")) else nil :: Player | nil
-    local charToTrack = if playerToTrack then playerToTrack.Character else nil :: Types.Character
+    local npcModel = self.npcModel :: NPCModel
     local newState = npcModel:GetAttribute("State")
 
     UpdateIndicator(self, newState)
@@ -137,36 +197,15 @@ function NPC:ChangeState(): ()
         
 end
 
-
-function NPC:Safe(): ()
-    error("Cannot be directly called, this is to be implemented by subclasses.")
-end
-
-function NPC:Curious(): ()
-    error("Cannot be directly called, this is to be implemented by subclasses.")
-end
-
-function NPC:Suspicious(): ()
-    error("Cannot be directly called, this is to be implemented by subclasses.")
-end
-
-function NPC:Alert(): ()
-    error("Cannot be directly called, this is to be implemented by subclasses.")
-end
-
-function NPC:Hostile(): ()
-    error("Cannot be directly called, this is to be implemented by subclasses.")
-end
-
 function NPC:ChangeWaypoint(): ()
 
-    local npcModel = self.npcModel :: Types.NPCModel
+    local npcModel = self.npcModel :: NPCModel
     local waypoint = findWaypointGivenToken(npcModel:GetAttribute("NextWaypointToken"))
     local isCompromised = npcModel:GetAttribute("compromised") :: boolean
     local function computePath()
         task.delay(math.random(1, 5), function()
             local nextWaypoint = determineNextWaypoint(
-                npcModel :: Types.NPCModel,
+                npcModel,
                 nil,
                 isCompromised
             )
@@ -246,7 +285,7 @@ end
 function NPC:Destroy(): ()
     UpdateIndicator(self, "Safe")
     disconnectAllPromises(self.promises)
-    CollectionService:RemoveTag(self.npcModel :: Types.NPCModel, TAG_NAME)
+    CollectionService:RemoveTag(self.npcModel :: NPCModel, TAG_NAME)
     if not self.npcModel:IsDescendantOf(workspace) then
         disconnectAllConnections(self.connections)
     end
@@ -287,5 +326,24 @@ function NPC:Active(initPosition: CFrame?): ()
     
 end
 
-return NPC
+function NPC:Safe(): ()
+    error("Cannot be directly called, this is to be implemented by subclasses.")
+end
 
+function NPC:Curious(): ()
+    error("Cannot be directly called, this is to be implemented by subclasses.")
+end
+
+function NPC:Suspicious(): ()
+    error("Cannot be directly called, this is to be implemented by subclasses.")
+end
+
+function NPC:Alert(): ()
+    error("Cannot be directly called, this is to be implemented by subclasses.")
+end
+
+function NPC:Hostile(): ()
+    error("Cannot be directly called, this is to be implemented by subclasses.")
+end
+
+return NPC

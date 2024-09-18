@@ -2,7 +2,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Types = require(ReplicatedStorage.Shared.Types)
-local NPC = require(script.Parent.Superclass)
+local NPC = require(script.Parent)
 
 --=========== NPC FUNCTIONS ================
 
@@ -25,8 +25,8 @@ local Civilian = {}
 Civilian.__index = Civilian
 setmetatable(Civilian, NPC)
 
-function Civilian.new(npcModel: Types.NPCModel, class: string?): any
-	local newNPC = NPC.new(npcModel, "Civilian") :: Types.NPC
+function Civilian.new(npcModel: NPC.NPCModel, class: string?): any
+	local newNPC = NPC.new(npcModel, "Civilian") :: NPC.NPCClass
 	
 	return setmetatable(newNPC, Civilian)
 end
@@ -49,7 +49,7 @@ function Civilian:Suspicious(): ()
     local charToTrack = playerToTrack.Character :: Types.Character
     self.npcModel:SetAttribute("NextWaypointToken",  
         determineNextWaypoint(
-            self.npcModel :: Types.NPCModel, 
+            self.npcModel :: NPC.NPCModel, 
             charToTrack.HumanoidRootPart, 
             self.npcModel:GetAttribute("compromised")
         )
@@ -67,7 +67,7 @@ function Civilian:Alert(): ()
 
     self.npcModel:SetAttribute("NextWaypointToken",  
         determineNextWaypoint(
-            self.npcModel :: Types.NPCModel, 
+            self.npcModel :: NPC.NPCModel, 
             nil, 
             self.npcModel:GetAttribute("compromised")
         )
@@ -84,7 +84,7 @@ function Civilian:Alert(): ()
 end
 
 function Civilian:Hostile(): ()
-    local npcModel = self.npcModel :: Types.NPCModel
+    local npcModel = self.npcModel :: NPC.NPCModel
     npcModel:SetAttribute("compromised", true)
     
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
@@ -94,7 +94,7 @@ function Civilian:Hostile(): ()
 
     npcModel:SetAttribute("NextWaypointToken", 
 		determineNextWaypoint(
-			npcModel :: Types.NPCModel, 
+			npcModel :: NPC.NPCModel, 
 			nil, 
 			true
 		)

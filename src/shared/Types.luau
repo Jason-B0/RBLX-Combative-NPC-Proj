@@ -17,63 +17,7 @@ export type NPCEvent = {
     promises: {[any]: Promise};    
 }
 
-export type NPCClass = {
-    new: (npcModel: NPCModel, class: string?) -> NPC,
-    __index: NPCClass,
 
-    Active: () -> (),
-
-    ChangeState: () -> (),
-
-    Safe: () -> (),
-    Curious: () -> (),
-    Suspicious: () -> (),
-    Alert: () -> (),
-    Hostile: () -> (),
-    
-    ChangeWaypoint: () -> (),
-    ChangePlayerToLookAt: () -> (),
-
-
-}
-
-export type NPC = {
-    npcModel: NPCModel,
-    npcClass: string,
-    thisNPCFinishedMoving: Signal<any>,
-    playerCurrentlyBeingTracked: Player,
-    currentTask: NPCEvent?,
-    promises: {[any]: Promise},
-    connections: {[any]: RBXScriptConnection},
-}
-
-export type NPCModel = (Model & {
-    HumanoidRootPart: BasePart,
-    Humanoid: Humanoid & {
-        HumanoidDescription: HumanoidDescription, Animator: Animator 
-    },
-    Torso: BasePart & {
-        Neck: Motor6D,
-        ["Left Shoulder"]: Motor6D,
-        ["Right Shoulder"]: Motor6D,
-        ["Left Hip"]: Motor6D,
-        ["Right Hip"]: Motor6D,
-    },
-    Head: BasePart,
-    StateBillboard: BillboardGui & {
-        StateIndicator: ImageLabel,
-    },
-    Weapon: WeaponTool?,
-    
-    -- Attributes
-    Class: string,
-    NextWaypointToken: string,
-        
-    -- Variables
-    playerToTrack: string,
-    State: "Safe" | "Curious" | "Suspicious" | "Alert" | "Hostile",
-    
-}) | Instance
 
 export type WeaponTool = Tool & {
 	Gun: Model & {
