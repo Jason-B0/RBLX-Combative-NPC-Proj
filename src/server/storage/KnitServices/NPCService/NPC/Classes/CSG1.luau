@@ -1,15 +1,15 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Types = require(ReplicatedStorage.Shared.Types)
-local NPC = require(script.Parent.Superclass)
+local NPC = require(script.Parent)
 --=========== MODULE ================
 
 local CSG1NPC = {}
 CSG1NPC.__index = CSG1NPC
 setmetatable(CSG1NPC, NPC)
 
-function CSG1NPC.new(npcModel: Types.NPCModel, class: string?)
-	local newNPC = NPC.new(npcModel, "CSG1") :: Types.NPC
+function CSG1NPC.new(npcModel: NPC.NPCModel, class: string?)
+	local newNPC = NPC.new(npcModel, "CSG1") :: NPC.NPCClass
 	
 	return setmetatable(newNPC, CSG1NPC)
 end
