@@ -44,7 +44,7 @@ local determineNextWaypoint = require(Helper.DetermineNextWaypoint)
 local findWaypointGivenToken = require(Helper.FindWaypointWithToken)
 local disconnectAllPromises = function(prom: {[any]: Promise})
     for _, promise: Promise | nil in pairs(prom) do
-        if promise ~= nil and promise:getStatus() == "Started" then    
+        if promise ~= nil and promise:getStatus() ~= "Cancelled" then    
             promise:cancel()
             promise = nil
         end
