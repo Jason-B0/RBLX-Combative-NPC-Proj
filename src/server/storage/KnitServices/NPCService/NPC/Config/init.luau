@@ -9,12 +9,12 @@ return {
 		Class = "Civilian",
 	
 		-- Other NPC states
-		aggroPlayer = "",
+		aggroPlayerName = "",
 		playerToLookAt = "",
 		compromised = false,
 		State = "Safe",
 		NextWaypointToken = "",
-		currentEventId = "	",
+		currentEventId = "",
 	};
 
 	NPC_ORG_MODEL = ServerStorage:WaitForChild("Asset"):WaitForChild("NPC") :: Model;

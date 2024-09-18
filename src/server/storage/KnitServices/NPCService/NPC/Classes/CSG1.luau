@@ -16,7 +16,7 @@ end
 function CSG1NPC:ChangeState(): ()
     local npcModel = self.npcModel :: Types.NPCModel
     local npcClass = npcModel:GetAttribute("Class") :: string
-    local playerToTrack = if npcModel:GetAttribute("aggroPlayer") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("aggroPlayer")) else nil :: Player | nil
+    local playerToTrack = if npcModel:GetAttribute("aggroPlayerName") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("aggroPlayerName")) else nil :: Player | nil
     local charToTrack = if playerToTrack then playerToTrack.Character else nil :: Types.Character
     local newState = npcModel:GetAttribute("State")
     self:UpdateIndicator(newState)
@@ -24,14 +24,6 @@ function CSG1NPC:ChangeState(): ()
     if self.promises.statePromise then
         self.promises.statePromise:cancel()
     end
-
-    local stateHandlers = {
-        ["Safe"] = self.Safe,
-        ["Curious"] = self.Curious,
-        ["Suspicious"] = self.Suspicious,
-        ["Alert"] = self.Alert,
-        ["Hostile"] = self.Hostile ,
-    }
 
     self.promises.statePromise = Promise.new(function(resolve, reject, onCancel)
 
@@ -43,7 +35,17 @@ function CSG1NPC:ChangeState(): ()
             return
         end
         
-        stateHandlers[newState](self)
+        if newState == "Safe" then
+            self:Safe()
+        elseif newState == "Curious" then
+            self:Curious()
+        elseif newState == "Suspicious" then
+            self:Suspicious()
+        elseif newState == "Alert" then
+            self:Alert()
+        elseif newState == "Hostile" then
+            self:Hostile()
+        end
 
         resolve()
     end)
@@ -51,27 +53,27 @@ function CSG1NPC:ChangeState(): ()
 end
 
 function CSG1NPC:Safe(): ()
-    self.npcModel:SetAttribute("aggroPlayer", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("aggroPlayerName", "")
+    self.npcModel:SetAttribute("playerToLookAt", "")
 end
 
 function CSG1NPC:Curious(): ()
-    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("aggroPlayer"))
+    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("aggroPlayerName"))
 end
 
 function CSG1NPC:Suspicious(): ()
-    self.npcModel:SetAttribute("aggroPlayer", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("aggroPlayerName", "")
+    self.npcModel:SetAttribute("playerToLookAt", "")
 end
 
 function CSG1NPC:Alert(): ()
-    self.npcModel:SetAttribute("aggroPlayer", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("aggroPlayerName", "")
+    self.npcModel:SetAttribute("playerToLookAt", "")
 end
 
 function CSG1NPC:Hostile(): ()
-    self.npcModel:SetAttribute("aggroPlayer", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("aggroPlayerName", "")
+    self.npcModel:SetAttribute("playerToLookAt", "")
 end
 
 return CSG1NPC

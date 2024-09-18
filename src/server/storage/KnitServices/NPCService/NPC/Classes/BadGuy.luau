@@ -35,24 +35,15 @@ end
 function BadGuy:ChangeState(): ()
     local npcModel = self.npcModel :: Types.NPCModel
     local npcClass = npcModel:GetAttribute("Class") :: string
-    local aggroPlayer = if npcModel:GetAttribute("aggroPlayer") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("aggroPlayer")) else nil :: Player | nil
+    local aggroPlayerName = npcModel:GetAttribute("aggroPlayerName") :: string
     local newState = npcModel:GetAttribute("State")
     self:UpdateIndicator(newState)
     
-    if self.promises.statePromise then
+    if self.promises.statePromise ~= nil and self.promises.statePromise:getStatus() == "Started" then
         self.promises.statePromise:cancel()
     end
 
-    local stateHandlers = {
-        ["Safe"] = self.Safe,
-        ["Curious"] = self.Curious,
-        ["Suspicious"] = self.Suspicious,
-        ["Alert"] = self.Alert,
-        ["Hostile"] = self.Hostile ,
-    }
-
     self.promises.statePromise = Promise.new(function(resolve, reject, onCancel)
-
         if onCancel(function()
             if self.promises.statePromise then
                 self.promises.statePromise:cancel()
@@ -61,7 +52,17 @@ function BadGuy:ChangeState(): ()
             return
         end
 
-        stateHandlers[newState](aggroPlayer)
+        if newState == "Safe" then
+            self:Safe()
+        elseif newState == "Curious" then
+            self:Curious()
+        elseif newState == "Suspicious" then
+            self:Suspicious()
+        elseif newState == "Alert" then
+            self:Alert()
+        elseif newState == "Hostile" then
+            self:Hostile()
+        end
 
         resolve()
     end)
@@ -69,29 +70,35 @@ function BadGuy:ChangeState(): ()
 end
 
 function BadGuy:Safe(): ()
-    self.npcModel:SetAttribute("aggroPlayer", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("aggroPlayerName", "")
+    self.npcModel:SetAttribute("playerToLookAt", "")
 end
 
-function BadGuy:Curious(aggroPlayer: Player): ()
-    self.npcModel:SetAttribute("playerToLookAt", aggroPlayer)
+function BadGuy:Curious(): ()
+    local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
+    self.npcModel:SetAttribute("playerToLookAt", aggroPlayerName)
 end
 
-function BadGuy:Suspicious(aggroPlayer: Player): ()
-    if self.npcModel:GetAttribute("playerToLookAt") ~= aggroPlayer.Name then
-        self.npcModel:SetAttribute("playerToLookAt", aggroPlayer.Name)
+function BadGuy:Suspicious(): ()
+    local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
+    if self.npcModel:GetAttribute("playerToLookAt") ~= aggroPlayerName then
+        self.npcModel:SetAttribute("playerToLookAt", aggroPlayerName)
     end
+    local aggroPlayer = Players:FindFirstChild(aggroPlayerName) :: Player
     local charToTrack = aggroPlayer.Character :: Types.Character
+
     self.npcModel:SetAttribute("NextWaypointToken",  
         determineNextWaypoint(
             self.npcModel :: Types.NPCModel, 
             charToTrack.HumanoidRootPart, 
-            self.npcModel:GetAttribute("compromised")
+            false
         )
     )
 end
 
-function BadGuy:Alert(aggroPlayer: Player): ()
+function BadGuy:Alert(): ()
+    local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
+    local aggroPlayer = Players:FindFirstChild(aggroPlayerName) :: Player
     local charToTrack = aggroPlayer.Character :: Types.Character
     local nextWaypoint = determineNextWaypoint(self.npcModel, charToTrack.HumanoidRootPart, false)
 
@@ -109,13 +116,16 @@ function BadGuy:Alert(aggroPlayer: Player): ()
     
     task.delay(2, function()
         if self.npcModel.Humanoid.Health > 0 then
-            self.npcModel:SetAttribute("playerToLookAt", nil)
+            self.npcModel:SetAttribute("playerToLookAt", "")
             self.npcModel:SetAttribute("State", "Hostile")
         end
     end)
 end
 
-function BadGuy:Hostile(aggroPlayer: Player): ()
+function BadGuy:Hostile(): ()
+    local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
+    local aggroPlayer = Players:FindFirstChild(aggroPlayerName) :: Player
+    local charToTrack = aggroPlayer.Character :: Types.Character
     local npcModel = self.npcModel :: Types.NPCModel
     npcModel:SetAttribute("compromised", true)
     
@@ -128,7 +138,7 @@ function BadGuy:Hostile(aggroPlayer: Player): ()
 		determineNextWaypoint(
 			npcModel :: Types.NPCModel, 
 			nil, 
-			true
+			false
 		)
 	)
     

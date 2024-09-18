@@ -70,7 +70,7 @@ export type NPCModel = (Model & {
     NextWaypointToken: string,
         
     -- Variables
-    aggroPlayer: string,
+    aggroPlayerName: string,
     State: "Safe" | "Curious" | "Suspicious" | "Alert" | "Hostile",
     
 }) | Instance

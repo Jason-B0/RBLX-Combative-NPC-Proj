@@ -35,7 +35,7 @@ end
 function Civilian:ChangeState(): ()
     local npcModel = self.npcModel :: Types.NPCModel
     local npcClass = npcModel:GetAttribute("Class") :: string
-    local playerToTrack = if npcModel:GetAttribute("aggroPlayer") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("aggroPlayer")) else nil :: Player | nil
+    local playerToTrack = if npcModel:GetAttribute("aggroPlayerName") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("aggroPlayerName")) else nil :: Player | nil
     local charToTrack = if playerToTrack then playerToTrack.Character else nil :: Types.Character
     local newState = npcModel:GetAttribute("State")
     self:UpdateIndicator(newState)
@@ -43,14 +43,6 @@ function Civilian:ChangeState(): ()
     if self.promises.statePromise then
         self.promises.statePromise:cancel()
     end
-
-    local stateHandlers = {
-        ["Safe"] = self.Safe,
-        ["Curious"] = self.Curious,
-        ["Suspicious"] = self.Suspicious,
-        ["Alert"] = self.Alert,
-        ["Hostile"] = self.Hostile ,
-    }
 
     self.promises.statePromise = Promise.new(function(resolve, reject, onCancel)
 
@@ -62,25 +54,35 @@ function Civilian:ChangeState(): ()
             return
         end
         
-        stateHandlers[newState](self)
-
+        if newState == "Safe" then
+            self:Safe()
+        elseif newState == "Curious" then
+            self:Curious()
+        elseif newState == "Suspicious" then
+            self:Suspicious()
+        elseif newState == "Alert" then
+            self:Alert()
+        elseif newState == "Hostile" then
+            self:Hostile()
+        end
+        
         resolve()
     end)
         
 end
 
 function Civilian:Safe(): ()
-    self.npcModel:SetAttribute("aggroPlayer", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("aggroPlayerName", "")
+    self.npcModel:SetAttribute("playerToLookAt", "")
 end
 
 function Civilian:Curious(): ()
-    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("aggroPlayer"))
+    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("aggroPlayerName"))
 end
 
 function Civilian:Suspicious(): ()
     local playerToTrack =
-        Players:FindFirstChild(self.npcModel:GetAttribute("aggroPlayer")) :: Player
+        Players:FindFirstChild(self.npcModel:GetAttribute("aggroPlayerName")) :: Player
     if self.npcModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
         self.npcModel:SetAttribute("playerToLookAt", playerToTrack.Name)
     end
@@ -112,7 +114,7 @@ function Civilian:Alert(): ()
     task.delay(5, function()
         if self.npcModel.Humanoid.Health > 0 then
             -- TODO: Signal: call 911
-            self.npcModel:SetAttribute("playerToLookAt", nil)
+            self.npcModel:SetAttribute("playerToLookAt", "")
             self.npcModel:SetAttribute("State", "Hostile")
             -- TODO: Signal: total compromised
         end

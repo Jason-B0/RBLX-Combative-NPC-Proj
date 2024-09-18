@@ -104,6 +104,7 @@ function NPC:UpdateIndicator(state: string?): ()
 end
 
 function NPC:ChangeState(): ()
+    print("Why is this called")
     error("Cannot be directly called, this is to be implemented by subclasses.")
 end
 

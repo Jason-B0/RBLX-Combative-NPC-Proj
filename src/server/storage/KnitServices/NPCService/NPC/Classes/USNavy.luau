@@ -19,7 +19,7 @@ end
 function USNavyNPC:ChangeState(): ()
     local npcModel = self.npcModel :: Types.NPCModel
     local npcClass = npcModel:GetAttribute("Class") :: string
-    local playerToTrack = if npcModel:GetAttribute("aggroPlayer") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("aggroPlayer")) else nil :: Player | nil
+    local playerToTrack = if npcModel:GetAttribute("aggroPlayerName") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("aggroPlayerName")) else nil :: Player | nil
     local charToTrack = if playerToTrack then playerToTrack.Character else nil :: Types.Character
     local newState = npcModel:GetAttribute("State")
     self:UpdateIndicator(newState)
@@ -27,14 +27,6 @@ function USNavyNPC:ChangeState(): ()
     if self.promises.statePromise then
         self.promises.statePromise:cancel()
     end
-
-    local stateHandlers = {
-        ["Safe"] = self.Safe,
-        ["Curious"] = self.Curious,
-        ["Suspicious"] = self.Suspicious,
-        ["Alert"] = self.Alert,
-        ["Hostile"] = self.Hostile ,
-    }
 
     self.promises.statePromise = Promise.new(function(resolve, reject, onCancel)
 
@@ -46,7 +38,17 @@ function USNavyNPC:ChangeState(): ()
             return
         end
         
-        stateHandlers[newState](self)
+        if newState == "Safe" then
+            self:Safe()
+        elseif newState == "Curious" then
+            self:Curious()
+        elseif newState == "Suspicious" then
+            self:Suspicious()
+        elseif newState == "Alert" then
+            self:Alert()
+        elseif newState == "Hostile" then
+            self:Hostile()
+        end
 
         resolve()
     end)
@@ -54,27 +56,27 @@ function USNavyNPC:ChangeState(): ()
 end
 
 function USNavyNPC:Safe(): ()
-    self.npcModel:SetAttribute("aggroPlayer", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("aggroPlayerName", "")
+    self.npcModel:SetAttribute("playerToLookAt", "")
 end
 
 function USNavyNPC:Curious(): ()
-    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("aggroPlayer"))
+    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("aggroPlayerName"))
 end
 
 function USNavyNPC:Suspicious(): ()
-    self.npcModel:SetAttribute("aggroPlayer", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("aggroPlayerName", "")
+    self.npcModel:SetAttribute("playerToLookAt", "")
 end
 
 function USNavyNPC:Alert(): ()
-    self.npcModel:SetAttribute("aggroPlayer", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("aggroPlayerName", "")
+    self.npcModel:SetAttribute("playerToLookAt", "")
 end
 
 function USNavyNPC:Hostile(): ()
-    self.npcModel:SetAttribute("aggroPlayer", nil)
-    self.npcModel:SetAttribute("playerToLookAt", nil)
+    self.npcModel:SetAttribute("aggroPlayerName", "")
+    self.npcModel:SetAttribute("playerToLookAt", "")
 end
 
 return USNavyNPC

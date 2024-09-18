@@ -1,9 +1,10 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Types = require(ReplicatedStorage.Shared.Types)
 local Knit = require(ReplicatedStorage.Packages.Knit)
-local TokenService = task.spawn(function()
+local TokenService
+task.spawn(function()
 	Knit.OnStart():awaitStatus()
-	return Knit.GetService("TokenService")
+	TokenService = Knit.GetService("TokenService")
 end)
 
 local Config = require(script.Parent.Parent.Config)
@@ -33,7 +34,7 @@ return function(npc: Types.NPCModel, targetPart: BasePart?, isEvading: boolean |
     end
 
     -- if evading, pick a random evade waypoint
-    if isEvading then
+    if isEvading == true then
         local evadeWaypoints = EVADE_FOLDER:GetChildren()
         return evadeWaypoints[math.random(1, #evadeWaypoints)]:GetAttribute("WaypointToken")
     end
