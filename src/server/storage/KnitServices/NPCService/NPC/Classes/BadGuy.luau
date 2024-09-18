@@ -60,7 +60,7 @@ function BadGuy:ChangeState(): ()
         end) then
             return
         end
-        
+
         stateHandlers[newState](aggroPlayer)
 
         resolve()
@@ -78,12 +78,10 @@ function BadGuy:Curious(aggroPlayer: Player): ()
 end
 
 function BadGuy:Suspicious(aggroPlayer: Player): ()
-    local playerToTrack =
-        Players:FindFirstChild(self.npcModel:GetAttribute("aggroPlayer")) :: Player
-    if self.npcModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
-        self.npcModel:SetAttribute("playerToLookAt", playerToTrack.Name)
+    if self.npcModel:GetAttribute("playerToLookAt") ~= aggroPlayer.Name then
+        self.npcModel:SetAttribute("playerToLookAt", aggroPlayer.Name)
     end
-    local charToTrack = playerToTrack.Character :: Types.Character
+    local charToTrack = aggroPlayer.Character :: Types.Character
     self.npcModel:SetAttribute("NextWaypointToken",  
         determineNextWaypoint(
             self.npcModel :: Types.NPCModel, 
@@ -93,29 +91,31 @@ function BadGuy:Suspicious(aggroPlayer: Player): ()
     )
 end
 
-function BadGuy:Alert(): ()
-    self.NPCModel:SetAttribute("compromised", true)
+function BadGuy:Alert(aggroPlayer: Player): ()
+    local charToTrack = aggroPlayer.Character :: Types.Character
+    local nextWaypoint = determineNextWaypoint(self.npcModel, charToTrack.HumanoidRootPart, false)
+
+    self.npcModel:SetAttribute("compromised", true)
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
         self.promises.movePromise:cancel()
         task.wait(1)
     end
-    local nextWaypoint = determineNextWaypoint(self.NPCModel, self.charToTrack.HumanoidRootPart, self.NPCModel:GetAttribute("compromised"))
         
     if self.promises.combatPromise ~= nil and self.promises.combatPromise:getStatus() == "Started" then
         self.promises.combatPromise:cancel()
     end
     
-    self.promises.combatPromise = Combat(self, self.playerToTrack)
+    self.promises.combatPromise = Combat(self, aggroPlayer)
     
     task.delay(2, function()
-        if self.NPCModel.Humanoid.Health > 0 then
-            self.NPCModel:SetAttribute("playerToLookAt", nil)
-            self.NPCModel:SetAttribute("State", "Hostile")
+        if self.npcModel.Humanoid.Health > 0 then
+            self.npcModel:SetAttribute("playerToLookAt", nil)
+            self.npcModel:SetAttribute("State", "Hostile")
         end
     end)
 end
 
-function BadGuy:Hostile(): ()
+function BadGuy:Hostile(aggroPlayer: Player): ()
     local npcModel = self.npcModel :: Types.NPCModel
     npcModel:SetAttribute("compromised", true)
     

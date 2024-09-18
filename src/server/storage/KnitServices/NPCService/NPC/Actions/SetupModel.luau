@@ -3,21 +3,6 @@ local Types = require(game:GetService("ReplicatedStorage").Shared.Types)
 local Config = require(script.Parent.Parent.Config)
 local Helper = script.Parent.Parent.Helper
 local Assets = script.Parent.Parent.Assets
---=========== CONFIG ================
-local NPC_DEFAULT_ATTRIBUTES = {
-	State = "Safe",
-	NextWaypointToken = "",
-	DetectionDistance = "DAY_OUTDOOR",
-	Tag = "",
-	Active = true,
-  Class = "X",
-  
-	-- Other NPC states
-  playerToTrack = "",
-  playerToLookAt = "",
-  compromised = false,
-}
-
 --=========== NPC CREATION HELPERS ================
 local GetNewNPCClass = require(Helper.GetNewNPCClass)
 local NPCAppearance = require(Assets.NPCAppearance)
@@ -64,7 +49,7 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
     npcModel.HumanoidRootPart:SetNetworkOwner(nil)
 
     -- set up NPC attributes
-    for attribute, defaultValue in pairs(NPC_DEFAULT_ATTRIBUTES) do
+    for attribute, defaultValue in pairs(Config.NPC_DEFAULT_ATTRIBUTES) do
       	npcModel:SetAttribute(attribute, defaultValue)
     end
 

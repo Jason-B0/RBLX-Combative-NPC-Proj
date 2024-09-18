@@ -9,7 +9,7 @@ return {
 		Class = "Civilian",
 	
 		-- Other NPC states
-		playerToTrack = "",
+		aggroPlayer = "",
 		playerToLookAt = "",
 		compromised = false,
 		State = "Safe",
