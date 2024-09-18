@@ -17,7 +17,7 @@ return {
 		currentEventId = "	",
 	};
 
-	NPC_ORG_MODEL = ServerStorage:WaitForChild("Assets"):WaitForChild("NPC") :: Model;
+	NPC_ORG_MODEL = ServerStorage:WaitForChild("Asset"):WaitForChild("NPC") :: Model;
 
 	NPC_AVOID_DIR = GAME_WORKSPACE:FindFirstChild("NPCAvoid");
 

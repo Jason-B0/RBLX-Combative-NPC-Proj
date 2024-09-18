@@ -2,7 +2,7 @@
 	"robloxLsp.diagnostics.disable": [
 		"trailing-space",
 		"undefined-type",
-		1017
+		"unused-local",
 	],
 	"stylua.targetReleaseVersion": "latest"
 }

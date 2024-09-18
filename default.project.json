@@ -27,7 +27,7 @@
       "$className": "ServerStorage",
       "$path": "src/server/storage",
 
-      "Assets": {
+      "Asset": {
         "$className": "Folder",
         "$ignoreUnknownInstances": true
       }

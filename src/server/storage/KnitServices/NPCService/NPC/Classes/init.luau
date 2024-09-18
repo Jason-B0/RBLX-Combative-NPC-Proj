@@ -312,7 +312,7 @@ function NPC:Active(initPosition: CFrame?): ()
     
     -- initialize move
     task.defer(function()
-        local nextWaypointToken = determineNextWaypoint(self.npcModel :: NPCModel, nil, self.npcModel:GetAttribute("compromised"))
+        local nextWaypointToken = determineNextWaypoint(self.npcModel, nil, self.npcModel:GetAttribute("compromised"))
         self.npcModel:PivotTo(
             if initPosition ~= nil then 
                 initPosition 
@@ -320,7 +320,7 @@ function NPC:Active(initPosition: CFrame?): ()
                 findWaypointGivenToken(nextWaypointToken):GetPivot()
             )
         task.wait(2)
-        nextWaypointToken = determineNextWaypoint(self.npcModel :: NPCModel, nil, self.npcModel:GetAttribute("compromised"))
+        nextWaypointToken = determineNextWaypoint(self.npcModel, nil, self.npcModel:GetAttribute("compromised"))
         self.npcModel:SetAttribute("NextWaypointToken", nextWaypointToken)
     end)
     
