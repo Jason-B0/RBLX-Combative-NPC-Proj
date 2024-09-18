@@ -81,7 +81,7 @@ function ClientNPCController:Render()
                 local npcTag = npcModel:GetAttribute("Tag")
                 local npcInFOV = npcIsInDetectionRange(npcModel, false)
                 
-                -- if NPC is in FOV and not already in the table, add it to the table
+                -- initiate if NPC is in FOV
                 if npcInFOV == true then
                     
                     -- if NPC is not already in the table, add it to the table
@@ -94,9 +94,9 @@ function ClientNPCController:Render()
                         NPCService:AggrovateNPC(npcTag, goalAggroState)
                     end
                     
-                -- if NPC is no longer in FOV, and it is in table, remove it from the table
+                -- if NPC is no longer in FOV, or it is dead, and it is in table, remove it from the table
                 elseif 
-                    (npcInFOV ~= true and self.npcsInFOV[npcTag] ~= nil)
+                    (npcInFOV ~= true and self.npcsInFOV[npcTag] ~= nil) or (npcModel.Humanoid.Health <= 0)
                 then
                     
                     if self.npcsInFOV[npcTag]:GetAttribute("State") ~= "Hostile" 

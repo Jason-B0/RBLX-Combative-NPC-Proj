@@ -45,7 +45,12 @@ return function(npc: Types.NPCModel, disregardFOV: boolean?): boolean
 
     -- ignore if the player is an admin
     if LocalPlayer.TeamColor == IGNORED_TEAM_COLOR then
-        return
+        return false
+    end
+
+    -- ignore if NPC is dead, dead NPC can't see
+    if npc.Humanoid.Health <= 0 then
+        return false
     end
 
     local npcInRange, distanceInBetween = false, nil
