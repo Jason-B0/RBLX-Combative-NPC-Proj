@@ -70,7 +70,7 @@ end
 --===============================================
 
 
-return function(self: Types.NPC, player: Player)
+return function(self: Types.NPCObject, player: Player)
 	
 	local npcHead = self.npcModel.Head :: BasePart
 	local npcHumanoid = self.npcModel.Humanoid :: Humanoid
@@ -142,7 +142,6 @@ return function(self: Types.NPC, player: Player)
 							task.delay(2, function()
 								self.npcModel:SetAttribute("aggroPlayerName", "")
 								self.npcModel:SetAttribute("State", "Safe")
-								self.npcModel:SetAttribute("compromised", false)
 							end)
 							break 
 						end

@@ -27,8 +27,9 @@ BadGuy.__index = BadGuy
 setmetatable(BadGuy, NPC)
 
 function BadGuy.new(npcModel: Types.NPCModel, class: string?): any
-	local newNPC = NPC.new(npcModel, "BadGuy") :: Types.NPC
-	
+	local newNPC = NPC.new(npcModel, "BadGuy") :: Types.NPCObject
+    newNPC.npcClass = "BadGuy"
+	newNPC.npcModel:SetAttribute("IsCombatant", true)
 	return setmetatable(newNPC, BadGuy)
 end
 
@@ -87,11 +88,10 @@ function BadGuy:Suspicious(): ()
     local aggroPlayer = Players:FindFirstChild(aggroPlayerName) :: Player
     local charToTrack = aggroPlayer.Character :: Types.Character
 
-    self.npcModel:SetAttribute("NextWaypointToken",  
+    self.npcModel:SetAttribute("nextWaypointToken",  
         determineNextWaypoint(
-            self.npcModel :: Types.NPCModel, 
-            charToTrack.HumanoidRootPart, 
-            false
+            self :: Types.NPCObject, 
+            charToTrack.HumanoidRootPart
         )
     )
 end
@@ -100,9 +100,11 @@ function BadGuy:Alert(): ()
     local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
     local aggroPlayer = Players:FindFirstChild(aggroPlayerName) :: Player
     local charToTrack = aggroPlayer.Character :: Types.Character
-    local nextWaypoint = determineNextWaypoint(self.npcModel, charToTrack.HumanoidRootPart, false)
+    local nextWaypoint = determineNextWaypoint(
+        self, 
+        charToTrack.HumanoidRootPart
+    )
 
-    self.npcModel:SetAttribute("compromised", true)
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
         self.promises.movePromise:cancel()
         task.wait(1)
@@ -127,18 +129,16 @@ function BadGuy:Hostile(): ()
     local aggroPlayer = Players:FindFirstChild(aggroPlayerName) :: Player
     local charToTrack = aggroPlayer.Character :: Types.Character
     local npcModel = self.npcModel :: Types.NPCModel
-    npcModel:SetAttribute("compromised", true)
     
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
         self.promises.movePromise:cancel()
         task.wait(1)
     end
 
-    npcModel:SetAttribute("NextWaypointToken", 
+    npcModel:SetAttribute("nextWaypointToken", 
 		determineNextWaypoint(
-			npcModel :: Types.NPCModel, 
-			nil, 
-			false
+			self :: Types.NPCObject, 
+			nil
 		)
 	)
     

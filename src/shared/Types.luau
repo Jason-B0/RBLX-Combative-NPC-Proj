@@ -18,8 +18,18 @@ export type NPCEvent = {
 }
 
 export type NPCClass = {
-    new: (npcModel: NPCModel, class: string?) -> NPC,
+    new: (npcModel: NPCModel, class: string?) -> NPCObject,
     __index: NPCClass,
+}
+
+export type NPCObject = {
+    npcModel: NPCModel,
+    npcClass: string,
+    thisNPCFinishedMoving: Signal<any>,
+    playerCurrentlyBeingTracked: Player,
+    currentTask: NPCEvent?,
+    promises: {[any]: Promise},
+    connections: {[any]: RBXScriptConnection},
 
     Active: () -> (),
 
@@ -33,18 +43,6 @@ export type NPCClass = {
     
     ChangeWaypoint: () -> (),
     ChangePlayerToLookAt: () -> (),
-
-
-}
-
-export type NPC = {
-    npcModel: NPCModel,
-    npcClass: string,
-    thisNPCFinishedMoving: Signal<any>,
-    playerCurrentlyBeingTracked: Player,
-    currentTask: NPCEvent?,
-    promises: {[any]: Promise},
-    connections: {[any]: RBXScriptConnection},
 }
 
 export type NPCModel = (Model & {
@@ -67,10 +65,12 @@ export type NPCModel = (Model & {
     
     -- Attributes
     Class: string,
-    NextWaypointToken: string,
-        
+    IsCombatant: boolean,
+    
     -- Variables
     aggroPlayerName: string,
+    nextWaypointToken: string,
+    currentEventId: string,
     State: "Safe" | "Curious" | "Suspicious" | "Alert" | "Hostile",
     
 }) | Instance

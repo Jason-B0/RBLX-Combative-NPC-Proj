@@ -91,6 +91,7 @@ function NPC.new(npcModel: Types.NPCModel, class: string?)
     -- set up NPC model
     local newNPC = table.clone(InitialProps)
     newNPC.npcModel = SetupModel(npcModel, TokenService:GenerateToken("npc"), class) :: Types.NPCModel
+    newNPC.npcClass = class or "Civilian"
     newNPC.npcModel.Parent = CONFIG.NPC_CONTAINER_DIR
 
     setCollisionGroup(newNPC.npcModel, "NPC")
@@ -131,16 +132,14 @@ end
 function NPC:ChangeWaypoint(): ()
 
     local npcModel = self.npcModel :: Types.NPCModel
-    local waypoint = findWaypointGivenToken(npcModel:GetAttribute("NextWaypointToken"))
-    local isCompromised = npcModel:GetAttribute("compromised") :: boolean
+    local waypoint = findWaypointGivenToken(npcModel:GetAttribute("nextWaypointToken"))
     local function computePath()
         task.delay(math.random(1, 5), function()
             local nextWaypoint = determineNextWaypoint(
-                npcModel :: Types.NPCModel,
-                nil,
-                isCompromised
+                self :: Types.NPCObject,
+                nil
             )
-            npcModel:SetAttribute("NextWaypointToken", nextWaypoint)
+            npcModel:SetAttribute("nextWaypointToken", nextWaypoint)
         end)
     end
     -- cancel any previous self.promises.movePromise
@@ -150,7 +149,6 @@ function NPC:ChangeWaypoint(): ()
 
     -- create new self.promises.movePromise
     self.promises.movePromise = Promise.new(function(resolve, reject, onCancel)
-        isCompromised = npcModel:GetAttribute("compromised") :: boolean
 
         self.promises.innerMovePromise = Move(self, waypoint)
 
@@ -226,7 +224,7 @@ function NPC:Active(initPosition: CFrame?): ()
     self.connections.stateChangeConnection = self.npcModel:GetAttributeChangedSignal("State"):Connect(function()
         self:ChangeState()
     end)
-    self.connections.waypointChangeConnection = self.npcModel:GetAttributeChangedSignal("NextWaypointToken"):Connect(function()
+    self.connections.waypointChangeConnection = self.npcModel:GetAttributeChangedSignal("nextWaypointToken"):Connect(function()
         self:ChangeWaypoint()
     end)
     self.connections.lookAtChangeConnection = self.npcModel:GetAttributeChangedSignal("playerToLookAt"):Connect(function()
@@ -243,7 +241,7 @@ function NPC:Active(initPosition: CFrame?): ()
 
     -- initialize move
     task.defer(function()
-        local nextWaypointToken = determineNextWaypoint(self.npcModel, nil, self.npcModel:GetAttribute("compromised"))
+        local nextWaypointToken = determineNextWaypoint(self, nil)
         self.npcModel:PivotTo(
             if initPosition ~= nil then 
                 initPosition 
@@ -251,8 +249,8 @@ function NPC:Active(initPosition: CFrame?): ()
                 findWaypointGivenToken(nextWaypointToken):GetPivot()
             )
         task.wait(2)
-        nextWaypointToken = determineNextWaypoint(self.npcModel, nil, self.npcModel:GetAttribute("compromised"))
-        self.npcModel:SetAttribute("NextWaypointToken", nextWaypointToken)
+        nextWaypointToken = determineNextWaypoint(self, nil)
+        self.npcModel:SetAttribute("nextWaypointToken", nextWaypointToken)
     end)
     
 end

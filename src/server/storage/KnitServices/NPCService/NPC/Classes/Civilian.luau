@@ -27,8 +27,8 @@ Civilian.__index = Civilian
 setmetatable(Civilian, NPC)
 
 function Civilian.new(npcModel: Types.NPCModel, class: string?): any
-	local newNPC = NPC.new(npcModel, "Civilian") :: Types.NPC
-	
+	local newNPC = NPC.new(npcModel, "Civilian") :: Types.NPCObject
+    newNPC.npcClass = "Civilian"
 	return setmetatable(newNPC, Civilian)
 end
 
@@ -87,27 +87,24 @@ function Civilian:Suspicious(): ()
         self.npcModel:SetAttribute("playerToLookAt", playerToTrack.Name)
     end
     local charToTrack = playerToTrack.Character :: Types.Character
-    self.npcModel:SetAttribute("NextWaypointToken",  
+    self.npcModel:SetAttribute("nextWaypointToken",  
         determineNextWaypoint(
-            self.npcModel :: Types.NPCModel, 
-            charToTrack.HumanoidRootPart, 
-            self.npcModel:GetAttribute("compromised")
+            self :: Types.NPCObject, 
+            charToTrack.HumanoidRootPart       
         )
     )
 end
 
 function Civilian:Alert(): ()
-    self.npcModel:SetAttribute("compromised", true)
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
         self.promises.movePromise:cancel()
         task.wait(1)
     end
 
-    self.npcModel:SetAttribute("NextWaypointToken",  
+    self.npcModel:SetAttribute("nextWaypointToken",  
         determineNextWaypoint(
-            self.npcModel :: Types.NPCModel, 
-            nil, 
-            self.npcModel:GetAttribute("compromised")
+            self :: Types.NPCObject, 
+            nil 
         )
     )
                 
@@ -123,19 +120,17 @@ end
 
 function Civilian:Hostile(): ()
     local npcModel = self.npcModel :: Types.NPCModel
-    npcModel:SetAttribute("compromised", true)
-    
+
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
         self.promises.movePromise:cancel()
         task.wait(1)
     end
 
-    npcModel:SetAttribute("NextWaypointToken", 
+    npcModel:SetAttribute("nextWaypointToken", 
 		determineNextWaypoint(
-			npcModel :: Types.NPCModel, 
-			nil, 
-			true
-		)
+			self :: Types.NPCObject, 
+			nil
+        )
 	)
     
 end

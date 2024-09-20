@@ -7,13 +7,13 @@ return {
 		Tag = "",
 		Active = true,
 		Class = "Civilian",
+		IsCombatant = false,
 	
 		-- Other NPC states
+		State = "Safe",
 		aggroPlayerName = "",
 		playerToLookAt = "",
-		compromised = false,
-		State = "Safe",
-		NextWaypointToken = "",
+		nextWaypointToken = "",
 		currentEventId = "",
 	};
 

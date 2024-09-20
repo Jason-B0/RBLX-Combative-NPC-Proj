@@ -11,8 +11,8 @@ USNavyNPC.__index = USNavyNPC
 setmetatable(USNavyNPC, NPC)
 
 function USNavyNPC.new(npcModel: Types.NPCModel, class: string?)
-	local newNPC = NPC.new(npcModel, "USNavy") :: Types.NPC
-	
+	local newNPC = NPC.new(npcModel, "USNavy") :: Types.NPCObject
+	newNPC.npcClass = "USNavy"
 	return setmetatable(newNPC, USNavyNPC)
 end
 
