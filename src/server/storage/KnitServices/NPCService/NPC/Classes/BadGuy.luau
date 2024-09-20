@@ -100,26 +100,20 @@ function BadGuy:Alert(): ()
     local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
     local aggroPlayer = Players:FindFirstChild(aggroPlayerName) :: Player
     local charToTrack = aggroPlayer.Character :: Types.Character
-    local nextWaypoint = determineNextWaypoint(
-        self, 
-        charToTrack.HumanoidRootPart
-    )
-
-    if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
+    
+    if self.promises.movePromise ~= nil then
         self.promises.movePromise:cancel()
-        task.wait(1)
     end
         
     if self.promises.combatPromise ~= nil and self.promises.combatPromise:getStatus() == "Started" then
         self.promises.combatPromise:cancel()
     end
     
-    self.promises.combatPromise = Combat(self, aggroPlayer)
-    
     task.delay(2, function()
         if self.npcModel.Humanoid.Health > 0 then
             self.npcModel:SetAttribute("playerToLookAt", "")
             self.npcModel:SetAttribute("State", "Hostile")
+            self.promises.combatPromise = Combat(self, aggroPlayer)
         end
     end)
 end
@@ -134,13 +128,6 @@ function BadGuy:Hostile(): ()
         self.promises.movePromise:cancel()
         task.wait(1)
     end
-
-    npcModel:SetAttribute("nextWaypointToken", 
-		determineNextWaypoint(
-			self :: Types.NPCObject, 
-			nil
-		)
-	)
     
 end
 

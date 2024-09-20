@@ -105,7 +105,6 @@ function NPC:UpdateIndicator(state: string?): ()
 end
 
 function NPC:ChangeState(): ()
-    print("Why is this called")
     error("Cannot be directly called, this is to be implemented by subclasses.")
 end
 
@@ -131,46 +130,37 @@ end
 
 function NPC:ChangeWaypoint(): ()
 
-    local npcModel = self.npcModel :: Types.NPCModel
-    local waypoint = findWaypointGivenToken(npcModel:GetAttribute("nextWaypointToken"))
-    local function computePath()
-        task.delay(math.random(1, 5), function()
+    local function findNewPath()
+        -- if the NPC is in a hostile state, combat code will already determine its next waypoint.
+        -- in case if there's a failure, recover by finding the player again
+        if self.npcModel:GetAttribute("State") == "Hostile" then
+            local targetPlayer = self.npcModel:GetAttribute("aggroPlayer") :: string
             local nextWaypoint = determineNextWaypoint(
                 self :: Types.NPCObject,
-                nil
+                Players:FindFirstChild(targetPlayer).Character.HumanoidRootPart
             )
-            npcModel:SetAttribute("nextWaypointToken", nextWaypoint)
-        end)
+        else
+            task.delay(math.random(1, 5), function()
+                local nextWaypoint = determineNextWaypoint(
+                    self :: Types.NPCObject,
+                    if self.npcModel:GetAttribute("State") == "Hostile" then "Hostile" else nil
+                )
+                self.npcModel:SetAttribute("nextWaypointToken", nextWaypoint)
+            end)
+        end
     end
+
+    local npcModel = self.npcModel :: Types.NPCModel
+    local waypoint = findWaypointGivenToken(npcModel:GetAttribute("nextWaypointToken"))
     -- cancel any previous self.promises.movePromise
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() == "Started" then
         self.promises.movePromise:cancel()
     end
 
     -- create new self.promises.movePromise
-    self.promises.movePromise = Promise.new(function(resolve, reject, onCancel)
-
-        self.promises.innerMovePromise = Move(self, waypoint)
-
-        -- if cancelled, cancel self.promises.innerMovePromise
-        if onCancel(function()
-            self.promises.innerMovePromise:cancel()
-        end) then
-            return
-        end
-
-        -- catch path rejections
-        self.promises.innerMovePromise:catch(function()
-            task.wait(4)
-            reject()
-        end)
-
-        -- wait for it to resolve
-        self.promises.innerMovePromise:andThen(computePath, computePath)
-        resolve()
-    end):catch(function()
-        computePath()
-    end)
+    self.promises.movePromise = Move(self, waypoint)
+        :andThen(findNewPath, findNewPath)
+        :catch(warn)
 end
 
 function NPC:ChangePlayerToLookAt(): ()
