@@ -96,7 +96,7 @@ function ClientNPCController:Render()
                     
                 -- if NPC is no longer in FOV, or it is dead, and it is in table, remove it from the table
                 elseif 
-                    (npcInFOV ~= true and self.npcsInFOV[npcTag] ~= nil) or (npcModel.Humanoid.Health <= 0)
+                    (npcInFOV ~= true and self.npcsInFOV[npcTag] ~= nil) or (npcModel.Humanoid.Health <= 0) or (npcModel.Parent == nil) or (npcModel == nil)
                 then
                     
                     if self.npcsInFOV[npcTag]:GetAttribute("State") ~= "Hostile" 
@@ -133,7 +133,7 @@ function ClientNPCController:Render()
     end)
     
     Character.ChildRemoved:Connect(function(child)
-        if child:IsA("Tool") then
+        if child:IsA("Tool") and operationState:get() ~= "Compromised" then
             operationState:set("Safe")
         end
     end)

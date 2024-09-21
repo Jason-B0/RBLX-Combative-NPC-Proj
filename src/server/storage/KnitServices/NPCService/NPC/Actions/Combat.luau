@@ -1,6 +1,7 @@
 --!nonstrict
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Engine = ReplicatedStorage.ACS_Engine :: Configuration |  Folder
@@ -10,6 +11,7 @@ local Modules = Engine.Modules :: Folder
 
 local Helper = script.Parent.Parent.Helper
 local determineNextWaypoint = require(Helper.DetermineNextWaypoint)
+local playerIsInDetectionRange = require(Helper.PlayerIsInDetectionRange)
 
 local Promise = require(ReplicatedStorage.Packages.Promise)
 local Types = require(ReplicatedStorage.Shared.Types)
@@ -17,17 +19,10 @@ local Weld = require(Helper.Weld)
 local Hitmarker = require(Modules.Hitmarker)
 
 --===============================================
-local function CheckForHumanoid(instance: Instance)
-	local humanoid = 
-		if instance.Parent ~= nil then 
-			instance.Parent:FindFirstChildOfClass("Humanoid") 
-		elseif instance.Parent ~= nil and instance.Parent.Parent ~= nil then
-			instance.Parent.Parent:FindFirstChildOfClass("Humanoid")
-		else
-			nil
-		
-	if humanoid then
-		return true, humanoid
+local function CheckForHumanoid(npcModel: NPCModel, instance: Instance)
+	local playerToTrack = Players:FindFirstChild(npcModel:GetAttribute("aggroPlayerName")) :: Player | nil
+	if playerToTrack ~= nil and instance:IsDescendantOf(playerToTrack.Character) then
+		return true, playerToTrack.Character.Humanoid
 	end
 	return false, nil
 end
@@ -60,13 +55,14 @@ local function isAlive(humanoid: Humanoid)
 end
 
 local function lookAt(playerPosition: Vector3, ncpRootPart: BasePart)
-	local diff = playerPosition - ncpRootPart.Position
+	local diff = ncpRootPart.Position - playerPosition
     local angle = math.atan2(diff.X, diff.Z) -- we just want the RootPart to orientate on one axis.
 
     local alignOrientation = ncpRootPart:FindFirstChildOfClass("AlignOrientation")
-    alignOrientation.CFrame = CFrame.Angles(0, angle, 0)
-	print(alignOrientation.CFrame)
+	alignOrientation.Enabled = true
+    alignOrientation.CFrame = CFrame.new(0,0,0) * CFrame.Angles(0, angle, 0)
 end
+
 --===============================================
 
 
@@ -89,13 +85,24 @@ return function(npcObject: Types.NPCObject, player: Player)
 	
 	local plrCharacter = player.Character :: Types.Character | PVInstance
 	local plrHumanoid = plrCharacter.Humanoid :: Humanoid
-	
+
 	return Promise.new(function(resolve, reject, onCancel)
 		local resume = true
-		
-		task.spawn(function()
+
+		local constantlyAimAtPlayer = RunService.Heartbeat:Connect(function()
+			if player ~= nil and isAlive(npcHumanoid) then
+				lookAt(plrCharacter.PrimaryPart.Position, npcHrp)
+			end
+		end)
+
+		if onCancel() then
+			resume = false
+			constantlyAimAtPlayer:Disconnect()
+		end
+
+		-- loop 1: constantly aim at player and track its position
+		task.spawn(function()	
 			while player ~= nil and resume and isAlive(npcHumanoid) do
-				
 				-- recompute path to move towards player
 				npcObject.npcModel:SetAttribute("nextWaypointToken", 
 					determineNextWaypoint(
@@ -103,7 +110,26 @@ return function(npcObject: Types.NPCObject, player: Player)
 						plrCharacter.HumanoidRootPart
 					)
 				)
+				task.wait(0.25)
+			end
+		end)
 
+		-- loop 2: shoot at player if in range and in line of sight
+		task.spawn(function()
+			local raycastParams = RaycastParams.new()
+			raycastParams.FilterDescendantsInstances = {npcObject.npcModel}
+			raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+			raycastParams.IgnoreWater = true
+
+			while player ~= nil and resume and isAlive(npcHumanoid) do	
+				-- if player isn't in detection range nor FOV then continue
+				if playerIsInDetectionRange(npcObject.npcModel, player, false) == false then
+					print("Player is not in detection range nor FOV")
+					task.wait(60 / weaponTool:GetAttribute("FireRate"))
+					continue
+				end
+
+				-- shoot if player is in remote range, is in line of sight, and mag isn't empty
 				local distance = (npcHrp.Position - plrCharacter:GetPivot().Position).Magnitude
 				local direction = (plrCharacter:GetPivot().Position - npcHrp.Position).Unit
 				local bulletTravelDir = plrCharacter:GetPivot().Position + 
@@ -112,31 +138,9 @@ return function(npcObject: Types.NPCObject, player: Player)
 						math.random(-distance * weaponRecoil,distance * weaponRecoil),
 						math.random(-distance * weaponRecoil,distance * weaponRecoil)
 					)
-				
-				local raycastParams = RaycastParams.new()
-				raycastParams.FilterDescendantsInstances = {npcObject.npcModel}
-				raycastParams.FilterType = Enum.RaycastFilterType.Exclude
-				raycastParams.IgnoreWater = true
-				
-				local raycastResult = workspace:Raycast(npcHrp.Position, direction * distance, raycastParams)
-				
-				if raycastResult then
-					-- TODO turn their entire body to player
-					lookAt(plrCharacter.PrimaryPart.Position, npcHrp)
-					
-					-- FX
-					task.spawn(function()
-						gunHandle:FindFirstChildOfClass("Sound"):Play()
-						gunHandle.Muzzle["FlashFX[Flash]"].Enabled = true
-						gunHandle.Muzzle["FlashFX[Light]"].Enabled = true
-						gunHandle.Muzzle["Smoke"].Enabled = true
-						task.wait(.05)
-						gunHandle.Muzzle["FlashFX[Flash]"].Enabled = false
-						gunHandle.Muzzle["FlashFX[Light]"].Enabled = false
-						gunHandle.Muzzle["Smoke"].Enabled = false
-					end)
-					
-					-- shoot
+
+				if weaponTool:GetAttribute("Ammo") > 0 then
+					-- fire bullet
 					Event.ServerBullet:FireAllClients(
 						npcObject.npcModel, 
 						gunHandle.Muzzle.WorldCFrame.Position,
@@ -144,39 +148,54 @@ return function(npcObject: Types.NPCObject, player: Player)
 						require(weaponTool.Settings),
 						nil
 					)
-					
-					local foundHum, humanoid = CheckForHumanoid(raycastResult.Instance)
+					-- play FX
+					gunHandle:FindFirstChildOfClass("Sound"):Play()
+					gunHandle.Muzzle["FlashFX[Flash]"].Enabled = true
+					gunHandle.Muzzle["FlashFX[Light]"].Enabled = true
+					gunHandle.Muzzle["Smoke"].Enabled = true
+					task.wait(.05)
+					gunHandle.Muzzle["FlashFX[Flash]"].Enabled = false
+					gunHandle.Muzzle["FlashFX[Light]"].Enabled = false
+					gunHandle.Muzzle["Smoke"].Enabled = false
+				else
+					-- if the mag is empty then reload
+					task.wait(3)
+					weaponTool:SetAttribute("Ammo", weaponTool:GetAttribute("MaxAmmo"))
+				end
+
+				-- check for hits
+				local raycastResult = workspace:Raycast(npcHrp.Position, direction * distance, raycastParams)
+				if raycastResult then
+			
+					local foundHum, humanoid = CheckForHumanoid(npcObject.npcModel, raycastResult.Instance)
 					if foundHum == true and Players:GetPlayerFromCharacter(humanoid.Parent) then
-						if humanoid.Health == 0 then 
-							task.delay(2, function()
-								npcObject.npcModel:SetAttribute("aggroPlayerName", "")
-								npcObject.npcModel:SetAttribute("State", "Safe")
-							end)
-							break 
-						end
-						------ How much damage the gun inflicts1s
+						-- inflict damage and reduce ammo
 						local damage = weaponTool:GetAttribute("DamagePerShot")	
 						humanoid:TakeDamage(damage)
 						weaponTool:SetAttribute("Ammo", weaponTool:GetAttribute("Ammo") - 1)
+						
+					else
+						-- if the mag is empty then reload
+						task.wait(3)
+						weaponTool:SetAttribute("Ammo", weaponTool:GetAttribute("MaxAmmo"))
+					end
 					
+					-- if player is dead then stop
+					if plrHumanoid.Health == 0 then
+						task.delay(2, function()
+							npcObject.npcModel:SetAttribute("aggroPlayerName", "")
+							npcObject.npcModel:SetAttribute("State", "Safe")
+						end)
+						break 
 					end
 					
 				end
 				
-				if onCancel() then
-					task.spawn(function()
-						resume = false
-					end)
-					break
-				end
-				
-				if weaponTool:GetAttribute("Ammo") <= 0 then
-					task.wait(3)
-				end
-				
-				task.wait(.25)
+				task.wait(60 / weaponTool:GetAttribute("FireRate"))
 			end
 			
+			constantlyAimAtPlayer:Disconnect()
+			npcHrp:FindFirstChildOfClass("AlignOrientation").Enabled = false
 			task.wait(1)
 			weaponTool:Destroy()
 			resolve()
