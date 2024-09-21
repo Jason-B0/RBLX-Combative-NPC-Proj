@@ -79,8 +79,8 @@ return function(npcObject: Types.NPCObject, player: Player)
 	weaponTool.Parent = npcObject.npcModel
 	local gunModel = weaponTool.Gun :: Model
 	local gunHandle = gunModel:FindFirstChild("Handle") or gunModel:FindFirstChild("Grip") :: BasePart
-	task.wait(.5)
 	weldWeapon(npcTorso, weaponTool)
+	task.wait(.5)
 	local weaponRecoil = weaponTool:GetAttribute("RecoilSpread") :: number
 	
 	local plrCharacter = player.Character :: Types.Character | PVInstance
