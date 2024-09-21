@@ -124,7 +124,6 @@ return function(npcObject: Types.NPCObject, player: Player)
 			while player ~= nil and resume and isAlive(npcHumanoid) do	
 				-- if player isn't in detection range nor FOV then continue
 				if playerIsInDetectionRange(npcObject.npcModel, player, false) == false then
-					print("Player is not in detection range nor FOV")
 					task.wait(60 / weaponTool:GetAttribute("FireRate"))
 					continue
 				end
