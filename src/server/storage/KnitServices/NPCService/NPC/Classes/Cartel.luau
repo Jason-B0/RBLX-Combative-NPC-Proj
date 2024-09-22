@@ -22,18 +22,18 @@ local determineNextWaypoint = require(Helper.DetermineNextWaypoint)
 
 --=========== MODULE ================
 
-local BadGuy = {}
-BadGuy.__index = BadGuy
-setmetatable(BadGuy, NPC)
+local Cartel = {}
+Cartel.__index = Cartel
+setmetatable(Cartel, NPC)
 
-function BadGuy.new(npcModel: Types.NPCModel, class: string?): any
-	local newNPC = NPC.new(npcModel, "BadGuy") :: Types.NPCObject
-    newNPC.npcClass = "BadGuy"
+function Cartel.new(npcModel: Types.NPCModel, class: string?): any
+	local newNPC = NPC.new(npcModel, "Cartel") :: Types.NPCObject
+    newNPC.npcClass = "Cartel"
 	newNPC.npcModel:SetAttribute("IsCombatant", true)
-	return setmetatable(newNPC, BadGuy)
+	return setmetatable(newNPC, Cartel)
 end
 
-function BadGuy:ChangeState(): ()
+function Cartel:ChangeState(): ()
     local npcModel = self.npcModel :: Types.NPCModel
     local npcClass = npcModel:GetAttribute("Class") :: string
     local aggroPlayerName = npcModel:GetAttribute("aggroPlayerName") :: string
@@ -70,17 +70,17 @@ function BadGuy:ChangeState(): ()
         
 end
 
-function BadGuy:Safe(): ()
+function Cartel:Safe(): ()
     self.npcModel:SetAttribute("aggroPlayerName", "")
     self.npcModel:SetAttribute("playerToLookAt", "")
 end
 
-function BadGuy:Curious(): ()
+function Cartel:Curious(): ()
     local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
     self.npcModel:SetAttribute("playerToLookAt", aggroPlayerName)
 end
 
-function BadGuy:Suspicious(): ()
+function Cartel:Suspicious(): ()
     local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
     if self.npcModel:GetAttribute("playerToLookAt") ~= aggroPlayerName then
         self.npcModel:SetAttribute("playerToLookAt", aggroPlayerName)
@@ -96,7 +96,7 @@ function BadGuy:Suspicious(): ()
     )
 end
 
-function BadGuy:Alert(): ()
+function Cartel:Alert(): ()
     local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
     local aggroPlayer = Players:FindFirstChild(aggroPlayerName) :: Player
     local charToTrack = aggroPlayer.Character :: Types.Character
@@ -118,7 +118,7 @@ function BadGuy:Alert(): ()
     end)
 end
 
-function BadGuy:Hostile(): ()
+function Cartel:Hostile(): ()
     local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
     local aggroPlayer = Players:FindFirstChild(aggroPlayerName) :: Player
     local charToTrack = aggroPlayer.Character :: Types.Character
@@ -131,4 +131,4 @@ function BadGuy:Hostile(): ()
     
 end
 
-return BadGuy
+return Cartel

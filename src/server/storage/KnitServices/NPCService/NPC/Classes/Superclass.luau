@@ -130,21 +130,23 @@ end
 
 function NPC:ChangeWaypoint(): ()
 
-    local function findNewPath()
+	local function findNewPath()
         -- if the NPC is in a hostile state, combat code will already determine its next waypoint.
         -- in case if there's a failure, recover by finding the player again
         if self.npcModel:GetAttribute("State") == "Hostile" then
-            local targetPlayer = self.npcModel:GetAttribute("aggroPlayer") :: string
+			local targetPlayer = self.npcModel:GetAttribute("aggroPlayer") :: string
+			if targetPlayer == "" or targetPlayer == nil then
+				targetPlayer = Players:FindFirstChildOfClass("Player").Name
+			end
             local nextWaypoint = determineNextWaypoint(
                 self :: Types.NPCObject,
                 Players:FindFirstChild(targetPlayer).Character.HumanoidRootPart
             )
         else
-            task.delay(math.random(1, 5), function()
+            task.delay(math.random(.2, 2), function()
                 local nextWaypoint = determineNextWaypoint(
-                    self :: Types.NPCObject,
-                    if self.npcModel:GetAttribute("State") == "Hostile" then "Hostile" else nil
-                )
+                    self :: Types.NPCObject               
+				)
                 self.npcModel:SetAttribute("nextWaypointToken", nextWaypoint)
             end)
         end
@@ -158,9 +160,30 @@ function NPC:ChangeWaypoint(): ()
     end
 
     -- create new self.promises.movePromise
-    self.promises.movePromise = Move(self, waypoint)
-        :andThen(findNewPath, findNewPath)
-        :catch(warn)
+	self.promises.movePromise = Promise.new(function(resolve, reject, onCancel)
+
+		self.promises.innerMovePromise = Move(self, waypoint)
+
+		-- if cancelled, cancel self.promises.innerMovePromise
+		if onCancel(function()
+				self.promises.innerMovePromise:cancel()
+			end) then
+			return
+		end
+
+		-- catch path rejections
+		self.promises.innerMovePromise:catch(function()
+			task.wait(1)
+			reject()
+		end)
+
+		-- wait for it to resolve
+		self.promises.innerMovePromise:andThen(findNewPath, findNewPath)
+		resolve()
+	end):catch(function()
+		findNewPath()
+	end)
+	
 end
 
 function NPC:ChangePlayerToLookAt(): ()
@@ -219,11 +242,13 @@ function NPC:Active(initPosition: CFrame?): ()
     end)
     self.connections.lookAtChangeConnection = self.npcModel:GetAttributeChangedSignal("playerToLookAt"):Connect(function()
         self:ChangePlayerToLookAt()
-    end) 
-    self.connections.diedConnection = self.npcModel.Humanoid.Died:Connect(function()
+	end) 
+	
+    self.npcModel.Humanoid.Died:Once(function()
         self:Died()
-    end)
-    self.connections.destroyConnection = self.npcModel.AncestryChanged:Connect(function()
+	end)
+	
+    self.npcModel.AncestryChanged:Once(function()
         if not self.npcModel:IsDescendantOf(workspace) then
             self:Destroy()
         end
@@ -246,4 +271,3 @@ function NPC:Active(initPosition: CFrame?): ()
 end
 
 return NPC
-

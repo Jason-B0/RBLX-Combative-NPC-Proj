@@ -58,8 +58,7 @@ local function lookAt(playerPosition: Vector3, ncpRootPart: BasePart)
 	local diff = ncpRootPart.Position - playerPosition
     local angle = math.atan2(diff.X, diff.Z) -- we just want the RootPart to orientate on one axis.
 
-    local alignOrientation = ncpRootPart:FindFirstChildOfClass("AlignOrientation")
-	alignOrientation.Enabled = true
+    local alignOrientation = ncpRootPart.AlignOrientation :: AlignOrientation
     alignOrientation.CFrame = CFrame.new(0,0,0) * CFrame.Angles(0, angle, 0)
 end
 
@@ -88,6 +87,9 @@ return function(npcObject: Types.NPCObject, player: Player)
 
 	return Promise.new(function(resolve, reject, onCancel)
 		local resume = true
+		
+		local alignOrientation = npcHrp:FindFirstChildOfClass("AlignOrientation")
+		alignOrientation.Enabled = true
 
 		local constantlyAimAtPlayer = RunService.Heartbeat:Connect(function()
 			if player ~= nil and isAlive(npcHumanoid) then

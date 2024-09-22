@@ -94,11 +94,13 @@ function ClientNPCController:Render()
                         NPCService:AggrovateNPC(npcTag, goalAggroState)
                     end
                     
-                -- if NPC is no longer in FOV, or it is dead, and it is in table, remove it from the table
-                elseif 
-                    (npcInFOV ~= true and self.npcsInFOV[npcTag] ~= nil) or (npcModel.Humanoid.Health <= 0) or (npcModel.Parent == nil) or (npcModel == nil)
-                then
-                    
+				-- else if NPC is no longer a valid model, remove itself
+				elseif npcModel.Parent == nil or npcModel == nil or npcModel.Humanoid.Health <= 0 then
+					self.npcsInFOV[npcTag] = nil
+					NPCService:AggrovateNPC(npcTag, "Safe")
+				
+				-- else if NPC is no longer in FOV or is dead, remove it from the table
+                elseif (npcInFOV ~= true and self.npcsInFOV[npcTag] ~= nil) or npcModel.Humanoid.Health <= 0 then
                     if self.npcsInFOV[npcTag]:GetAttribute("State") ~= "Hostile" 
                     and self.npcsInFOV[npcTag]:GetAttribute("State") ~= "Alert" 
                     then

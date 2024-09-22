@@ -1,4 +1,5 @@
 local ServerStorage = game:GetService("ServerStorage")
+local RunService = game:GetService("RunService")
 local GAME_WORKSPACE = workspace:WaitForChild("GAME_WORKSPACE")
 return {
 	NPC_DEFAULT_ATTRIBUTES = {
@@ -27,5 +28,5 @@ return {
 
 	NPC_CONTAINER_DIR = GAME_WORKSPACE:FindFirstChild("NPC");
 
-	DEBUG_ENABLED = false;
+	DEBUG_ENABLED = if RunService:IsStudio() then true else false;
 }

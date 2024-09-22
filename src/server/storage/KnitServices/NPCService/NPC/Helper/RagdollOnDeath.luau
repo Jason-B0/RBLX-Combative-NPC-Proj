@@ -1,6 +1,23 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Types = require(ReplicatedStorage.Shared.Types)
 
+local function restoreDefaultCollisionGroup(_npcModel: Types.NPCModel)
+	for _, v in pairs(_npcModel:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.CollisionGroup = "Default"
+		end
+	end
+end
+
+local function selectRandomLimb(npcModel: Types.NPCModel)
+	local limbs = {
+		npcModel["Right Arm"],
+		npcModel["Left Arm"],
+		npcModel["Head"],
+	}
+	return limbs[math.random(1, #limbs)]
+end
+
 return function(npcModel: Types.NPCModel)
     for _, joint in pairs(npcModel:GetDescendants()) do
 		if joint:IsA("Motor6D") then
@@ -19,4 +36,10 @@ return function(npcModel: Types.NPCModel)
 			joint:Destroy()
 		end
 	end
+	local part = selectRandomLimb(npcModel)
+	part.CustomPhysicalProperties = PhysicalProperties.new(5, 0.3, 0.5)
+	task.delay(3, function()
+		part.CustomPhysicalProperties = PhysicalProperties.new(0.2, 0.3, 0.5)
+	end)
+	restoreDefaultCollisionGroup(npcModel)
 end

@@ -6,17 +6,17 @@ local Types = require(ReplicatedStorage.Shared.Types)
 --============================
 local Config = require(script.Parent.Parent.Config)
 local PATHFINDING_PARAM = {
-    AgentRadius = 2,
+    AgentRadius = 4,
     AgentHeight = 5,
-    AgentCanJump = false,
+    AgentCanJump = true,
     AgentCanClimb = false,
-    WaypointSpacing = 3,
-    Costs = {
-        Concrete = 4,
-        Rock = 5,
-        Asphalt = 10,
-        Grass = 20,
-        
+    WaypointSpacing = 5,
+	Costs = {
+		Mud = 1,
+		Ground = 2,
+		Asphalt = 2,
+		Grass = 20,
+		Water = math.huge,
         NPCAvoid = math.huge,
     }
 }
@@ -32,12 +32,12 @@ return function(self, destination: Types.Waypoint | BasePart)
         local blockedConnection = nil :: RBXScriptConnection  | nil
 		
 		-- Promise allowing NPC to move to destination
-        return Promise.new(function(resolve, reject, onCancel)
+		return Promise.new(function(resolve, reject, onCancel)
             path:ComputeAsync(self.npcModel.HumanoidRootPart.Position, destination.Position)
             
             if path.Status ~= Enum.PathStatus.Success then
                 if DEBUG_ENABLED then 
-                    warn("Could not calculate path\nDestination: " .. destination:GetAttribute("WaypointToken"))
+				warn(`Cannot compute path.\n NPC: {self.npcModel}\n Destination wp: {destination}`)
                 end
                 task.wait(0.5)
                 reject()
@@ -58,8 +58,8 @@ return function(self, destination: Types.Waypoint | BasePart)
                     end
                     -- Call function to re-compute new path
                     if DEBUG_ENABLED then
-                        warn("Waypoint blocked, recompute.")
-                    end
+						warn(`Waypoint blocked.\n NPC: {self.npcModel}\n Destination wp: {destination}`)                    
+					end
                     reject()
                 end
             end)
@@ -72,7 +72,7 @@ return function(self, destination: Types.Waypoint | BasePart)
                         task.wait(5)
                         if thisWPIndex == nextWaypointIndex then
                             if DEBUG_ENABLED then
-                                warn("Waypoint timed out, recompute.")
+								warn(`Waypoint timed out.\n NPC: {self.npcModel}\n Destination wp: {destination}`)  
                             end
                             reachedConnection:Disconnect()
                             if blockedConnection ~= nil then
