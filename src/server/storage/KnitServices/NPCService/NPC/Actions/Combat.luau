@@ -1,6 +1,7 @@
 --!nonstrict
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Engine = ReplicatedStorage.ACS_Engine :: Configuration |  Folder
@@ -9,6 +10,8 @@ local Event = Engine.Events :: Folder
 local Modules = Engine.Modules :: Folder
 
 local Helper = script.Parent.Parent.Helper
+local determineNextWaypoint = require(Helper.DetermineNextWaypoint)
+local playerIsInDetectionRange = require(Helper.PlayerIsInDetectionRange)
 
 local Promise = require(ReplicatedStorage.Packages.Promise)
 local Types = require(ReplicatedStorage.Shared.Types)
@@ -16,17 +19,10 @@ local Weld = require(Helper.Weld)
 local Hitmarker = require(Modules.Hitmarker)
 
 --===============================================
-local function CheckForHumanoid(instance: Instance)
-	local humanoid = 
-		if instance.Parent ~= nil then 
-			instance.Parent:FindFirstChildOfClass("Humanoid") 
-		elseif instance.Parent ~= nil and instance.Parent.Parent ~= nil then
-			instance.Parent.Parent:FindFirstChildOfClass("Humanoid")
-		else
-			nil
-		
-	if humanoid then
-		return true, humanoid
+local function CheckForHumanoid(npcModel: NPCModel, instance: Instance)
+	local playerToTrack = Players:FindFirstChild(npcModel:GetAttribute("aggroPlayerName")) :: Player | nil
+	if playerToTrack ~= nil and instance:IsDescendantOf(playerToTrack.Character) then
+		return true, playerToTrack.Character.Humanoid
 	end
 	return false, nil
 end
@@ -58,43 +54,83 @@ local function isAlive(humanoid: Humanoid)
 	return humanoid.Health > 0 and humanoid:GetState() ~= Enum.HumanoidStateType.Dead
 end
 
-local function lookAt(target: Vector3, eye: Vector3)
-	local forwardVector = (eye - target).Unit
-	local upVector = Vector3.new(0, 1, 0)
-	-- You have to remember the right hand rule or google search to get this right
-	local rightVector = forwardVector:Cross(upVector)
-	local upVector2 = rightVector:Cross(forwardVector)
+local function lookAt(playerPosition: Vector3, ncpRootPart: BasePart)
+	local diff = ncpRootPart.Position - playerPosition
+    local angle = math.atan2(diff.X, diff.Z) -- we just want the RootPart to orientate on one axis.
 
-	return CFrame.fromMatrix(eye, rightVector, upVector2)
+    local alignOrientation = ncpRootPart.AlignOrientation :: AlignOrientation
+    alignOrientation.CFrame = CFrame.new(0,0,0) * CFrame.Angles(0, angle, 0)
 end
+
 --===============================================
 
 
-return function(self: Types.NPC, player: Player)
+return function(npcObject: Types.NPCObject, player: Player)
 	
-	local npcHead = self.npcModel.Head :: BasePart
-	local npcHumanoid = self.npcModel.Humanoid :: Humanoid
-	local npcNeck = self.npcModel.Torso.Neck :: Motor6D
-	local npcTorso = self.npcModel.Torso :: BasePart
-	local npcHrp = self.npcModel.HumanoidRootPart :: BasePart
+	local npcHead = npcObject.npcModel.Head :: BasePart
+	local npcHumanoid = npcObject.npcModel.Humanoid :: Humanoid
+	local npcNeck = npcObject.npcModel.Torso.Neck :: Motor6D
+	local npcTorso = npcObject.npcModel.Torso :: BasePart
+	local npcHrp = npcObject.npcModel.HumanoidRootPart :: BasePart
 	
-	local weaponTool = equipWeapon("CZ75") :: Types.WeaponTool
-	weaponTool.Parent = self.npcModel
+	-- set up weapon
+	local weaponTool = equipWeapon("CZ75") :: Types.WeaponTool | Instance
+	weaponTool.Parent = npcObject.npcModel
 	local gunModel = weaponTool.Gun :: Model
-	local gunHandle = gunModel.Handle or gunModel.Grip :: BasePart
-	task.wait(.5)
+	local gunHandle = gunModel:FindFirstChild("Handle") or gunModel:FindFirstChild("Grip") :: BasePart
 	weldWeapon(npcTorso, weaponTool)
+	task.wait(.5)
 	local weaponRecoil = weaponTool:GetAttribute("RecoilSpread") :: number
 	
-	local plrCharacter = player.Character :: Types.Character
-	local plrHumanoid = plrCharacter:FindFirstChildOfClass("Humanoid") :: Humanoid
-	
+	local plrCharacter = player.Character :: Types.Character | PVInstance
+	local plrHumanoid = plrCharacter.Humanoid :: Humanoid
+
 	return Promise.new(function(resolve, reject, onCancel)
 		local resume = true
 		
-		task.spawn(function()
+		local alignOrientation = npcHrp:FindFirstChildOfClass("AlignOrientation")
+		alignOrientation.Enabled = true
+
+		local constantlyAimAtPlayer = RunService.Heartbeat:Connect(function()
+			if player ~= nil and isAlive(npcHumanoid) then
+				lookAt(plrCharacter.PrimaryPart.Position, npcHrp)
+			end
+		end)
+
+		if onCancel() then
+			resume = false
+			constantlyAimAtPlayer:Disconnect()
+		end
+
+		-- loop 1: constantly aim at player and track its position
+		task.spawn(function()	
 			while player ~= nil and resume and isAlive(npcHumanoid) do
-				
+				-- recompute path to move towards player
+				npcObject.npcModel:SetAttribute("nextWaypointToken", 
+					determineNextWaypoint(
+						npcObject :: Types.NPCObject, 
+						plrCharacter.HumanoidRootPart
+					)
+				)
+				task.wait(0.25)
+			end
+		end)
+
+		-- loop 2: shoot at player if in range and in line of sight
+		task.spawn(function()
+			local raycastParams = RaycastParams.new()
+			raycastParams.FilterDescendantsInstances = {npcObject.npcModel}
+			raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+			raycastParams.IgnoreWater = true
+
+			while player ~= nil and resume and isAlive(npcHumanoid) do	
+				-- if player isn't in detection range nor FOV then continue
+				if playerIsInDetectionRange(npcObject.npcModel, player, false) == false then
+					task.wait(60 / weaponTool:GetAttribute("FireRate"))
+					continue
+				end
+
+				-- shoot if player is in remote range, is in line of sight, and mag isn't empty
 				local distance = (npcHrp.Position - plrCharacter:GetPivot().Position).Magnitude
 				local direction = (plrCharacter:GetPivot().Position - npcHrp.Position).Unit
 				local bulletTravelDir = plrCharacter:GetPivot().Position + 
@@ -103,72 +139,64 @@ return function(self: Types.NPC, player: Player)
 						math.random(-distance * weaponRecoil,distance * weaponRecoil),
 						math.random(-distance * weaponRecoil,distance * weaponRecoil)
 					)
-				
-				local raycastParams = RaycastParams.new()
-				raycastParams.FilterDescendantsInstances = {self.npcModel}
-				raycastParams.FilterType = Enum.RaycastFilterType.Exclude
-				raycastParams.IgnoreWater = true
-				
-				local raycastResult = workspace:Raycast(npcHrp.Position, direction * distance, raycastParams)
-				
-				if raycastResult then
-					-- TODO turn their entire body to player
-					local targetCFrame = lookAt(plrCharacter.PrimaryPart.Position, npcHrp.Position)
-					
-					-- FX
-					task.spawn(function()
-						gunHandle:FindFirstChildOfClass("Sound"):Play()
-						gunHandle.Muzzle["FlashFX[Flash]"].Enabled = true
-						gunHandle.Muzzle["FlashFX[Light]"].Enabled = true
-						gunHandle.Muzzle["Smoke"].Enabled = true
-						task.wait(.05)
-						gunHandle.Muzzle["FlashFX[Flash]"].Enabled = false
-						gunHandle.Muzzle["FlashFX[Light]"].Enabled = false
-						gunHandle.Muzzle["Smoke"].Enabled = false
-					end)
-					
-					-- shoot
+
+				if weaponTool:GetAttribute("Ammo") > 0 then
+					-- fire bullet
 					Event.ServerBullet:FireAllClients(
-						self.npcModel, 
+						npcObject.npcModel, 
 						gunHandle.Muzzle.WorldCFrame.Position,
 						(bulletTravelDir - gunHandle.Muzzle.WorldCFrame.Position).Unit,
 						require(weaponTool.Settings),
 						nil
 					)
-					
-					local foundHum, humanoid = CheckForHumanoid(raycastResult.Instance)
+					-- play FX
+					gunHandle:FindFirstChildOfClass("Sound"):Play()
+					gunHandle.Muzzle["FlashFX[Flash]"].Enabled = true
+					gunHandle.Muzzle["FlashFX[Light]"].Enabled = true
+					gunHandle.Muzzle["Smoke"].Enabled = true
+					task.wait(.05)
+					gunHandle.Muzzle["FlashFX[Flash]"].Enabled = false
+					gunHandle.Muzzle["FlashFX[Light]"].Enabled = false
+					gunHandle.Muzzle["Smoke"].Enabled = false
+				else
+					-- if the mag is empty then reload
+					task.wait(3)
+					weaponTool:SetAttribute("Ammo", weaponTool:GetAttribute("MaxAmmo"))
+				end
+
+				-- check for hits
+				local raycastResult = workspace:Raycast(npcHrp.Position, direction * distance, raycastParams)
+				if raycastResult then
+			
+					local foundHum, humanoid = CheckForHumanoid(npcObject.npcModel, raycastResult.Instance)
 					if foundHum == true and Players:GetPlayerFromCharacter(humanoid.Parent) then
-						if humanoid.Health == 0 then 
-							task.delay(2, function()
-								self.npcModel:SetAttribute("playerToTrack", nil)
-								self.npcModel:SetAttribute("State", "Safe")
-								self.npcModel:SetAttribute("compromised", false)
-							end)
-							break 
-						end
-						------ How much damage the gun inflicts1s
+						-- inflict damage and reduce ammo
 						local damage = weaponTool:GetAttribute("DamagePerShot")	
 						humanoid:TakeDamage(damage)
 						weaponTool:SetAttribute("Ammo", weaponTool:GetAttribute("Ammo") - 1)
+						
+					else
+						-- if the mag is empty then reload
+						task.wait(3)
+						weaponTool:SetAttribute("Ammo", weaponTool:GetAttribute("MaxAmmo"))
+					end
 					
+					-- if player is dead then stop
+					if plrHumanoid.Health == 0 then
+						task.delay(2, function()
+							npcObject.npcModel:SetAttribute("aggroPlayerName", "")
+							npcObject.npcModel:SetAttribute("State", "Safe")
+						end)
+						break 
 					end
 					
 				end
 				
-				if onCancel() then
-					task.spawn(function()
-						resume = false
-					end)
-					break
-				end
-				
-				if weaponTool:GetAttribute("Ammo") <= 0 then
-					task.wait(3)
-				end
-				
-				task.wait(.25)
+				task.wait(60 / weaponTool:GetAttribute("FireRate"))
 			end
 			
+			constantlyAimAtPlayer:Disconnect()
+			npcHrp:FindFirstChildOfClass("AlignOrientation").Enabled = false
 			task.wait(1)
 			weaponTool:Destroy()
 			resolve()

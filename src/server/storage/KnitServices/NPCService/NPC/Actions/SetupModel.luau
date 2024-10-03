@@ -3,21 +3,6 @@ local Types = require(game:GetService("ReplicatedStorage").Shared.Types)
 local Config = require(script.Parent.Parent.Config)
 local Helper = script.Parent.Parent.Helper
 local Assets = script.Parent.Parent.Assets
---=========== CONFIG ================
-local NPC_DEFAULT_ATTRIBUTES = {
-	State = "Safe",
-	NextWaypointToken = "",
-	DetectionDistance = "DAY_OUTDOOR",
-	Tag = "",
-	Active = true,
-  Class = "X",
-  
-	-- Other NPC states
-  playerToTrack = "",
-  playerToLookAt = "",
-  compromised = false,
-}
-
 --=========== NPC CREATION HELPERS ================
 local GetNewNPCClass = require(Helper.GetNewNPCClass)
 local NPCAppearance = require(Assets.NPCAppearance)
@@ -34,10 +19,11 @@ end
 --=========== MODULE ================
 return function(npcModel: Types.NPCModel, token: string, class: string?)
     npcModel.Name = token
-    local npcClass = GetNewNPCClass(class)
+	local npcClass = GetNewNPCClass(class)
+	local humanoid = npcModel:FindFirstChildOfClass("Humanoid") :: Humanoid
 
     -- set up NPC appearance
-    local h: HumanoidDescription = Instance.new("HumanoidDescription", npcModel:WaitForChild("Humanoid")) :: HumanoidDescription
+	local h: HumanoidDescription = Instance.new("HumanoidDescription", humanoid) :: HumanoidDescription
     h.Face = NPCAppearance:GetAsset("Face", nil, false) :: number
 
     local bodyColor = NPCAppearance:GetAsset("BodyColor", nil, false) :: Color3
@@ -59,12 +45,25 @@ return function(npcModel: Types.NPCModel, token: string, class: string?)
     h.FaceAccessory = if faceAccessory then convertToString(faceAccessory) else ""
     h.FrontAccessory = if frontAccessory then convertToString(frontAccessory) else ""
 
-	  npcModel.Parent = Config.NPC_CONTAINER_DIR
-    npcModel:FindFirstChildOfClass("Humanoid"):ApplyDescriptionReset(h, Enum.AssetTypeVerification.Default)
+	npcModel.Parent = Config.NPC_CONTAINER_DIR
+	humanoid:ApplyDescriptionReset(h, Enum.AssetTypeVerification.Always)
     npcModel.HumanoidRootPart:SetNetworkOwner(nil)
 
+	-- disable collision on accessory handles
+	for _, accessory in pairs(npcModel:GetChildren()) do
+        if accessory:IsA("Accessory") then
+            for _, part in pairs(accessory:GetDescendants()) do
+                if part:IsA("BasePart") then
+					part.CanCollide = false
+					part.CanQuery = false
+					part.CanTouch = false
+                end
+            end
+        end
+    end
+
     -- set up NPC attributes
-    for attribute, defaultValue in pairs(NPC_DEFAULT_ATTRIBUTES) do
+    for attribute, defaultValue in pairs(Config.NPC_DEFAULT_ATTRIBUTES) do
       	npcModel:SetAttribute(attribute, defaultValue)
     end
 

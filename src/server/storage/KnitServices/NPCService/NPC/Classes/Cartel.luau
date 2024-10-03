@@ -3,7 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Promise = require(ReplicatedStorage.Packages.Promise)
 local Types = require(ReplicatedStorage.Shared.Types)
-local NPC = require(script.Parent)
+local NPC = require(script.Parent.Superclass)
 
 --=========== NPC FUNCTIONS ================
 
@@ -22,30 +22,29 @@ local determineNextWaypoint = require(Helper.DetermineNextWaypoint)
 
 --=========== MODULE ================
 
-local Civilian = {}
-Civilian.__index = Civilian
-setmetatable(Civilian, NPC)
+local Cartel = {}
+Cartel.__index = Cartel
+setmetatable(Cartel, NPC)
 
-function Civilian.new(npcModel: Types.NPCModel, class: string?): any
-	local newNPC = NPC.new(npcModel, "Civilian") :: Types.NPCObject
-    newNPC.npcClass = "Civilian"
-	return setmetatable(newNPC, Civilian)
+function Cartel.new(npcModel: Types.NPCModel, class: string?): any
+	local newNPC = NPC.new(npcModel, "Cartel") :: Types.NPCObject
+    newNPC.npcClass = "Cartel"
+	newNPC.npcModel:SetAttribute("IsCombatant", true)
+	return setmetatable(newNPC, Cartel)
 end
 
-function Civilian:ChangeState(): ()
+function Cartel:ChangeState(): ()
     local npcModel = self.npcModel :: Types.NPCModel
     local npcClass = npcModel:GetAttribute("Class") :: string
-    local playerToTrack = if npcModel:GetAttribute("aggroPlayerName") ~= nil then Players:FindFirstChild(npcModel:GetAttribute("aggroPlayerName")) else nil :: Player | nil
-    local charToTrack = if playerToTrack then playerToTrack.Character else nil :: Types.Character
+    local aggroPlayerName = npcModel:GetAttribute("aggroPlayerName") :: string
     local newState = npcModel:GetAttribute("State")
     self:UpdateIndicator(newState)
     
-    if self.promises.statePromise then
+    if self.promises.statePromise ~= nil and self.promises.statePromise:getStatus() == "Started" then
         self.promises.statePromise:cancel()
     end
 
     self.promises.statePromise = Promise.new(function(resolve, reject, onCancel)
-
         if onCancel(function()
             if self.promises.statePromise then
                 self.promises.statePromise:cancel()
@@ -53,7 +52,7 @@ function Civilian:ChangeState(): ()
         end) then
             return
         end
-        
+
         if newState == "Safe" then
             self:Safe()
         elseif newState == "Curious" then
@@ -65,78 +64,71 @@ function Civilian:ChangeState(): ()
         elseif newState == "Hostile" then
             self:Hostile()
         end
-        
+
         resolve()
     end)
         
 end
 
-function Civilian:Safe(): ()
+function Cartel:Safe(): ()
     self.npcModel:SetAttribute("aggroPlayerName", "")
     self.npcModel:SetAttribute("playerToLookAt", "")
 end
 
-function Civilian:Curious(): ()
-    self.npcModel:SetAttribute("playerToLookAt", self.npcModel:GetAttribute("aggroPlayerName"))
+function Cartel:Curious(): ()
+    local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
+    self.npcModel:SetAttribute("playerToLookAt", aggroPlayerName)
 end
 
-function Civilian:Suspicious(): ()
-    local playerToTrack =
-        Players:FindFirstChild(self.npcModel:GetAttribute("aggroPlayerName")) :: Player
-    if self.npcModel:GetAttribute("playerToLookAt") ~= playerToTrack.Name then
-        self.npcModel:SetAttribute("playerToLookAt", playerToTrack.Name)
+function Cartel:Suspicious(): ()
+    local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
+    if self.npcModel:GetAttribute("playerToLookAt") ~= aggroPlayerName then
+        self.npcModel:SetAttribute("playerToLookAt", aggroPlayerName)
     end
-    local charToTrack = playerToTrack.Character :: Types.Character
+    local aggroPlayer = Players:FindFirstChild(aggroPlayerName) :: Player
+    local charToTrack = aggroPlayer.Character :: Types.Character
+
     self.npcModel:SetAttribute("nextWaypointToken",  
         determineNextWaypoint(
-            self.npcModel :: Types.NPCModel, 
-            charToTrack.HumanoidRootPart, 
-            self.npcModel:GetAttribute("compromised")
+            self :: Types.NPCObject, 
+            charToTrack.HumanoidRootPart
         )
     )
 end
 
-function Civilian:Alert(): ()
-    if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
+function Cartel:Alert(): ()
+    local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
+    local aggroPlayer = Players:FindFirstChild(aggroPlayerName) :: Player
+    local charToTrack = aggroPlayer.Character :: Types.Character
+    
+    if self.promises.movePromise ~= nil then
         self.promises.movePromise:cancel()
-        task.wait(1)
     end
-
-    self.npcModel:SetAttribute("nextWaypointToken",  
-        determineNextWaypoint(
-            self.npcModel :: Types.NPCModel, 
-            nil, 
-            self.npcModel:GetAttribute("compromised")
-        )
-    )
-                
-    task.delay(5, function()
+        
+    if self.promises.combatPromise ~= nil and self.promises.combatPromise:getStatus() == "Started" then
+        self.promises.combatPromise:cancel()
+    end
+    
+    task.delay(2, function()
         if self.npcModel.Humanoid.Health > 0 then
-            -- TODO: Signal: call 911
             self.npcModel:SetAttribute("playerToLookAt", "")
             self.npcModel:SetAttribute("State", "Hostile")
-            -- TODO: Signal: total compromised
+            self.promises.combatPromise = Combat(self, aggroPlayer)
         end
     end)
 end
 
-function Civilian:Hostile(): ()
+function Cartel:Hostile(): ()
+    local aggroPlayerName = self.npcModel:GetAttribute("aggroPlayerName") :: string
+    local aggroPlayer = Players:FindFirstChild(aggroPlayerName) :: Player
+    local charToTrack = aggroPlayer.Character :: Types.Character
     local npcModel = self.npcModel :: Types.NPCModel
-    npcModel:SetAttribute("compromised", true)
     
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
         self.promises.movePromise:cancel()
         task.wait(1)
     end
-
-    npcModel:SetAttribute("nextWaypointToken", 
-		determineNextWaypoint(
-			npcModel :: Types.NPCModel, 
-			nil, 
-			true
-		)
-	)
     
 end
 
-return Civilian
+return Cartel

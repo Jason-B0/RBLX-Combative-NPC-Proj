@@ -347,3 +347,4 @@ function NPC:Hostile(): ()
 end
 
 return NPC
+

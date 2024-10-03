@@ -48,12 +48,6 @@ local function createNPCAvoidPart(size: Vector3)
     newPart.Locked = false
     newPart.Anchored = true
     newPart.CastShadow = false
-    newPart.TopSurface = Enum.SurfaceType.Smooth
-    newPart.BottomSurface = Enum.SurfaceType.Smooth
-    newPart.LeftSurface = Enum.SurfaceType.Smooth
-    newPart.RightSurface = Enum.SurfaceType.Smooth
-    newPart.FrontSurface = Enum.SurfaceType.Smooth
-    newPart.BackSurface = Enum.SurfaceType.Smooth
     newPart.CanCollide = false
     newPart.Color = Color3.fromRGB(225, 225, 0)
     newPart.Transparency = RunService:IsStudio() and 0.8 or 1
@@ -72,7 +66,7 @@ end
 function NPCService:AggrovateNPC(player: Player, npcTag: string, newState: string)
     local npc = self.NPCs[npcTag]
     if npc then
-        npc:SetAttribute("playerToTrack", player.Name or nil)
+        npc:SetAttribute("aggroPlayerName", if player then player.Name else nil)
         npc:SetAttribute("State", newState)
     end
 end

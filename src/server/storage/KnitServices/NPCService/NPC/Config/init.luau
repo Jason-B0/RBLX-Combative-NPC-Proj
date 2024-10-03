@@ -1,4 +1,5 @@
 local ServerStorage = game:GetService("ServerStorage")
+local RunService = game:GetService("RunService")
 local GAME_WORKSPACE = workspace:WaitForChild("GAME_WORKSPACE")
 return {
 	NPC_DEFAULT_ATTRIBUTES = {
@@ -7,14 +8,14 @@ return {
 		Tag = "",
 		Active = true,
 		Class = "Civilian",
+		IsCombatant = false,
 	
 		-- Other NPC states
-		playerToTrack = "",
-		playerToLookAt = "",
-		compromised = false,
 		State = "Safe",
-		NextWaypointToken = "",
-		currentEventId = "	",
+		aggroPlayerName = "",
+		playerToLookAt = "",
+		nextWaypointToken = "",
+		currentEventId = "",
 	};
 
 	NPC_ORG_MODEL = ServerStorage:WaitForChild("Asset"):WaitForChild("NPC") :: Model;
@@ -27,5 +28,5 @@ return {
 
 	NPC_CONTAINER_DIR = GAME_WORKSPACE:FindFirstChild("NPC");
 
-	DEBUG_ENABLED = false;
+	DEBUG_ENABLED = if RunService:IsStudio() then true else false;
 }
