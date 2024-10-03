@@ -3,7 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Promise = require(ReplicatedStorage.Packages.Promise)
 local Types = require(ReplicatedStorage.Shared.Types)
-local NPC = require(script.Parent.Superclass)
+local NPC = require(script.Parent)
 --=========== MODULE ================
 
 local USNavyNPC = {}

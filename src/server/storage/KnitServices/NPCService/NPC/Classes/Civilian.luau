@@ -3,7 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Promise = require(ReplicatedStorage.Packages.Promise)
 local Types = require(ReplicatedStorage.Shared.Types)
-local NPC = require(script.Parent.Superclass)
+local NPC = require(script.Parent)
 
 --=========== NPC FUNCTIONS ================
 
@@ -89,8 +89,9 @@ function Civilian:Suspicious(): ()
     local charToTrack = playerToTrack.Character :: Types.Character
     self.npcModel:SetAttribute("nextWaypointToken",  
         determineNextWaypoint(
-            self :: Types.NPCObject, 
-            charToTrack.HumanoidRootPart       
+            self.npcModel :: Types.NPCModel, 
+            charToTrack.HumanoidRootPart, 
+            self.npcModel:GetAttribute("compromised")
         )
     )
 end
@@ -103,8 +104,9 @@ function Civilian:Alert(): ()
 
     self.npcModel:SetAttribute("nextWaypointToken",  
         determineNextWaypoint(
-            self :: Types.NPCObject, 
-            nil 
+            self.npcModel :: Types.NPCModel, 
+            nil, 
+            self.npcModel:GetAttribute("compromised")
         )
     )
                 
@@ -120,7 +122,8 @@ end
 
 function Civilian:Hostile(): ()
     local npcModel = self.npcModel :: Types.NPCModel
-
+    npcModel:SetAttribute("compromised", true)
+    
     if self.promises.movePromise ~= nil and self.promises.movePromise:getStatus() ~= "Started" then
         self.promises.movePromise:cancel()
         task.wait(1)
@@ -128,9 +131,10 @@ function Civilian:Hostile(): ()
 
     npcModel:SetAttribute("nextWaypointToken", 
 		determineNextWaypoint(
-			self :: Types.NPCObject, 
-			nil
-        )
+			npcModel :: Types.NPCModel, 
+			nil, 
+			true
+		)
 	)
     
 end
